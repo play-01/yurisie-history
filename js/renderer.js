@@ -6,7 +6,7 @@ window.Yurisie = window.Yurisie || {};
 const W = 960;
 const H = 540;
 const CENTER = [480, 340];
-const BOUNDS = { left: 70, right: 890, top: 195, bottom: 495 };
+const BOUNDS = { left: 24, right: 936, top: 175, bottom: 520 };
 const TAU = Math.PI * 2;
 
 const loadImg = (src) => {
@@ -29,6 +29,7 @@ const ASSETS = {
   shackle: loadImg('assets/obj_shackle.png'),
   vortex: loadImg('assets/obj_vortex.png'),
   introGif: loadImg('assets/img10.gif'),
+  iconBoss: loadImg('assets/icon_2740.png'),
   mIdleSword: loadImg('assets/yurisie_motions/motion_idle_sword.png'),
   mDiveSlash: loadImg('assets/yurisie_motions/motion_dive_slash.png'),
   mSpinSlash: loadImg('assets/yurisie_motions/motion_spin_slash.png'),
@@ -208,7 +209,7 @@ function drawAttacks(ctx, stage, elapsed, animTime) {
       if (!firing) {
         const fillH = h * progress;
         ctx.fillStyle = `rgba(225, 130, 255, ${alpha * 0.85})`;
-        ctx.fillRect(a.x1, a.y2 - fillH, w, fillH);
+        ctx.fillRect(a.x1, a.y1, w, fillH);
       } else {
         // Core white/violet sword beam flash
         const beamW = w * 0.36 * fade;
@@ -254,26 +255,26 @@ function drawAttacks(ctx, stage, elapsed, animTime) {
       ctx.save();
       ctx.translate(a.x, a.y);
       ctx.rotate(a.angle || 0);
-      const len = 1150;
+      const len = 1350;
       if (!firing) {
-        const alpha = 0.2 + progress * 0.36;
-        ctx.fillStyle = `rgba(255, 36, 92, ${alpha * 0.42})`;
+        const alpha = 0.36 + progress * 0.34;
+        ctx.fillStyle = `rgba(210, 18, 36, ${alpha * 0.72})`;
         ctx.fillRect(-len / 2, -a.width / 2, len, a.width);
-        ctx.fillStyle = `rgba(255, 85, 140, ${alpha})`;
+        ctx.fillStyle = `rgba(245, 36, 56, ${alpha * 0.6})`;
         ctx.fillRect(-len / 2, -(a.width * progress) / 2, len, a.width * progress);
-        ctx.strokeStyle = nearFire ? '#ffffff' : '#ff85b3';
-        ctx.lineWidth = nearFire ? 2.5 : 1.5;
+        ctx.strokeStyle = nearFire ? '#ffffff' : 'rgba(255, 195, 205, 0.9)';
+        ctx.lineWidth = nearFire ? 3 : 1.8;
         ctx.strokeRect(-len / 2, -a.width / 2, len, a.width);
       } else {
-        // DNF black-core abyssal slash + magenta aura + white core flash
-        ctx.shadowColor = '#ff2a85';
-        ctx.shadowBlur = 22 * fade;
-        ctx.fillStyle = `rgba(18, 4, 30, ${0.92 * fade})`;
-        ctx.fillRect(-len / 2, -(a.width * 0.62), len, a.width * 1.24);
-        ctx.fillStyle = `rgba(255, 70, 165, ${0.72 * fade})`;
+        // Exact Screenshot 2 black-core + neon purple/magenta beam
+        ctx.shadowColor = '#d926ff';
+        ctx.shadowBlur = 24 * fade;
+        ctx.fillStyle = `rgba(220, 45, 255, ${0.85 * fade})`;
+        ctx.fillRect(-len / 2, -(a.width * 0.52), len, a.width * 1.04);
+        ctx.fillStyle = `rgba(10, 2, 18, ${0.96 * fade})`;
         ctx.fillRect(-len / 2, -(a.width * 0.34), len, a.width * 0.68);
-        ctx.fillStyle = `rgba(255, 245, 255, ${0.95 * fade})`;
-        ctx.fillRect(-len / 2, -3 * fade, len, 6 * fade);
+        ctx.fillStyle = `rgba(255, 210, 255, ${0.92 * fade})`;
+        ctx.fillRect(-len / 2, -4 * fade, len, 8 * fade);
       }
       ctx.restore();
       if (a.seq && !firing) {
@@ -297,8 +298,30 @@ function drawAttacks(ctx, stage, elapsed, animTime) {
         firing ? 6 * fade : 3
       );
       ctx.restore();
+
+      // DNF authentic bottom-center cast bar ("파멸")
       if (!firing) {
-        label(ctx, a.label || '점프(C) 또는 백스텝(↓+C)!', CENTER[0], 172 + Math.sin(animTime * 14) * 3, '#ffe49e', 16);
+        const bx = W / 2 - 95;
+        const by = 452;
+        const bw = 190;
+        const bh = 24;
+        ctx.save();
+        ctx.fillStyle = 'rgba(14, 8, 22, 0.9)';
+        ctx.fillRect(bx, by, bw, bh);
+        ctx.strokeStyle = nearFire ? '#ffe49e' : '#8d628c';
+        ctx.lineWidth = 1.8;
+        ctx.strokeRect(bx, by, bw, bh);
+        if (ASSETS.iconBoss.complete && ASSETS.iconBoss.naturalWidth > 0) {
+          ctx.drawImage(ASSETS.iconBoss, bx + 2, by + 2, 20, 20);
+        }
+        const barX = bx + 26;
+        const barW = bw - 30;
+        ctx.fillStyle = '#240b16';
+        ctx.fillRect(barX, by + 14, barW, 7);
+        ctx.fillStyle = nearFire ? '#ff99b8' : '#e02446';
+        ctx.fillRect(barX, by + 14, barW * progress, 7);
+        label(ctx, a.castName || '파멸', barX + barW / 2, by + 8, '#fff4f6', 11);
+        ctx.restore();
       }
     }
   }
@@ -401,17 +424,16 @@ function drawFlower(ctx, pt, color, animTime) {
 function pickBossMotionSprite(stage, elapsed, counterReady) {
   if (stage.introCutIn?.eclipse && elapsed < stage.introCutIn.duration) {
     const t = elapsed / stage.introCutIn.duration;
-    if (t < 0.38) return { img: ASSETS.mDiveSlash, scale: 0.32 };
-    if (t < 0.72) return { img: ASSETS.mTailRelease, scale: 0.28 };
-    return { img: ASSETS.mSwordStance, scale: 0.42 };
+    if (t < 0.35) return { img: ASSETS.mDiveSlash, targetH: 210 };
+    return { img: ASSETS.mTailRelease, targetH: 225 };
   }
-  if (counterReady) return { img: ASSETS.mLowDash, scale: 0.36 };
-  const activeSlash = stage.attacks.some((a) => a.type === 'slash' && elapsed >= a.fire && elapsed <= a.fire + 0.35);
-  if (activeSlash) return { img: ASSETS.mSpinSlash, scale: 0.28 };
+  if (counterReady) return { img: ASSETS.mLowDash, targetH: 185 };
+  const activeAttack = stage.attacks.some((a) => (a.type === 'slash' || a.type === 'pillar') && elapsed >= a.warn && elapsed <= a.fire + 0.35);
+  if (activeAttack) return { img: ASSETS.mTailRelease, targetH: 220 };
   if (stage.chain && !stage.chain.cut && elapsed >= stage.chain.warn) {
-    return { img: ASSETS.mCoilOrb, scale: 0.38 };
+    return { img: ASSETS.mCoilOrb, targetH: 195 };
   }
-  if (stage.worldState) return { img: ASSETS.mIdleSword, scale: 0.28 };
+  if (stage.worldState) return { img: ASSETS.mIdleSword, targetH: 205 };
   return null;
 }
 
@@ -422,8 +444,9 @@ function drawBoss(ctx, x, y, counterReady, animTime, stage, elapsed) {
 
   const motion = pickBossMotionSprite(stage, elapsed, counterReady);
   if (motion && motion.img.complete && motion.img.naturalWidth > 0) {
-    const dw = motion.img.naturalWidth * motion.scale;
-    const dh = motion.img.naturalHeight * motion.scale;
+    const scale = motion.targetH / motion.img.naturalHeight;
+    const dw = motion.img.naturalWidth * scale;
+    const dh = motion.targetH;
     ctx.save();
     ctx.translate(x, y + bob);
     if (x < 400) ctx.scale(-1, 1);
@@ -489,7 +512,7 @@ function drawPlayer(ctx, state) {
     oval(ctx, d.x, d.y, d.r, d.r * 0.52, `rgba(220, 210, 236, ${a})`, null);
   }
 
-  const scale = 0.72;
+  const scale = 0.56;
   const dw = 160 * scale;
   const dh = 150 * scale;
 
@@ -507,7 +530,7 @@ function drawPlayer(ctx, state) {
   }
 
   const shadowColor = p.backstep > 0 ? '#7efcd2' : p.running ? '#38bdf8' : '#52e8ff66';
-  oval(ctx, p.x, p.y, p.running ? 27 : 23, 9, 'rgba(10, 5, 16, 0.75)', shadowColor, p.running || p.backstep > 0 ? 2 : 1.5);
+  oval(ctx, p.x, p.y, p.running ? 22 : 18, 7, 'rgba(10, 5, 16, 0.75)', shadowColor, p.running || p.backstep > 0 ? 2 : 1.5);
 
   ctx.save();
   ctx.translate(p.x, p.y - p.z);
@@ -553,117 +576,101 @@ function drawIntroCutIn(ctx, cutIn, elapsed, animTime) {
       ctx.drawImage(ASSETS.introGif, 0, 0, W, H);
       ctx.restore();
     }
-    // Darken arena
-    ctx.fillStyle = `rgba(6, 2, 14, ${0.42 * clamp(alpha, 0, 1)})`;
+    ctx.fillStyle = `rgba(6, 2, 14, ${0.44 * clamp(alpha, 0, 1)})`;
     ctx.fillRect(0, 0, W, H);
 
-    // Boss descends from y=115 to y=248 during t=0..0.35
+    // Boss drops straight down from top (t=0..0.35) with vertical crimson/black speed streaks
     const descentT = clamp(t / 0.35, 0, 1);
-    const bossY = lerp(115, 248, 1 - Math.pow(1 - descentT, 3));
+    const bossY = lerp(70, 260, 1 - Math.pow(1 - descentT, 3));
 
-    // Sudden wing/aura spread burst around t=0.35..0.65
+    if (t < 0.42) {
+      const streakFade = t < 0.35 ? 1 : 1 - (t - 0.35) / 0.07;
+      ctx.save();
+      ctx.globalAlpha = clamp(streakFade * 0.85, 0, 1);
+      for (let i = -5; i <= 5; i++) {
+        const sx = 480 + i * 24;
+        ctx.fillStyle = i % 2 === 0 ? 'rgba(215, 22, 95, 0.7)' : 'rgba(18, 4, 28, 0.85)';
+        ctx.fillRect(sx - 4, 0, 8, bossY + 25);
+      }
+      if (t >= 0.28) {
+        const ringR = lerp(20, 190, (t - 0.28) / 0.14);
+        oval(ctx, 480, bossY + 10, ringR, ringR * 0.42, 'rgba(255, 235, 255, 0.22)', 'rgba(255, 160, 220, 0.8)', 4);
+      }
+      ctx.restore();
+    }
+
+    // Pale moon / eclipse in upper-center behind Yurisie
+    const moonGrad = ctx.createRadialGradient(480, 145, 18, 480, 145, 118);
+    moonGrad.addColorStop(0, 'rgba(220, 212, 230, 0.55)');
+    moonGrad.addColorStop(0.65, 'rgba(138, 32, 196, 0.42)');
+    moonGrad.addColorStop(1, 'rgba(138, 32, 196, 0)');
+    ctx.fillStyle = moonGrad;
+    ctx.beginPath();
+    ctx.arc(480, 145, 118, 0, TAU);
+    ctx.fill();
+
+    // Sudden wing/arm spread + swirling purple mist (t >= 0.32)
     if (t >= 0.32) {
       const spreadT = clamp((t - 0.32) / 0.28, 0, 1);
-      const wingSpan = lerp(30, 210, 1 - Math.pow(1 - spreadT, 2));
+      const wingSpan = lerp(35, 230, 1 - Math.pow(1 - spreadT, 2));
       ctx.save();
-      ctx.translate(480, bossY - 45);
+      ctx.translate(480, bossY - 40);
       for (const dir of [-1, 1]) {
-        const wg = ctx.createLinearGradient(0, 0, dir * wingSpan, -50);
-        wg.addColorStop(0, 'rgba(180, 30, 120, 0.82)');
-        wg.addColorStop(0.6, 'rgba(95, 14, 140, 0.55)');
+        const wg = ctx.createLinearGradient(0, 0, dir * wingSpan, -40);
+        wg.addColorStop(0, 'rgba(195, 25, 130, 0.78)');
+        wg.addColorStop(0.6, 'rgba(105, 16, 150, 0.52)');
         wg.addColorStop(1, 'rgba(30, 4, 60, 0)');
         ctx.fillStyle = wg;
         ctx.beginPath();
         ctx.moveTo(0, 0);
-        ctx.quadraticCurveTo(dir * wingSpan * 0.55, -75, dir * wingSpan, -25);
-        ctx.quadraticCurveTo(dir * wingSpan * 0.65, 35, 0, 22);
+        ctx.quadraticCurveTo(dir * wingSpan * 0.55, -80, dir * wingSpan, -20);
+        ctx.quadraticCurveTo(dir * wingSpan * 0.65, 40, 0, 24);
         ctx.closePath();
         ctx.fill();
       }
       ctx.restore();
     }
 
-    // Dark-purple eclipse orb behind boss
-    const orbR = 84 + Math.sin(animTime * 6) * 4;
-    const orbGrad = ctx.createRadialGradient(480, bossY - 14, 14, 480, bossY - 14, orbR * 1.45);
-    orbGrad.addColorStop(0, 'rgba(10, 2, 22, 0.96)');
-    orbGrad.addColorStop(0.55, 'rgba(138, 32, 196, 0.8)');
-    orbGrad.addColorStop(0.82, 'rgba(255, 62, 136, 0.48)');
-    orbGrad.addColorStop(1, 'rgba(138, 32, 196, 0)');
-    ctx.fillStyle = orbGrad;
-    ctx.beginPath();
-    ctx.arc(480, bossY - 14, orbR * 1.45, 0, TAU);
-    ctx.fill();
-
     if (ASSETS.vortex.complete && ASSETS.vortex.naturalWidth > 0) {
       ctx.save();
       ctx.translate(480, bossY - 14);
       ctx.rotate(animTime * 2.2);
       ctx.globalAlpha = clamp(alpha * 0.58, 0, 1);
-      ctx.drawImage(ASSETS.vortex, -98, -98, 196, 196);
+      ctx.drawImage(ASSETS.vortex, -110, -110, 220, 220);
       ctx.restore();
     }
 
-    // Flying blades from 4 corners / diagonal angles (t >= 0.45)
+    // Symmetrical 6 blades rising/hovering cleanly Left (3) and Right (3) matching reference
     if (t >= 0.45 && ASSETS.blade.complete && ASSETS.blade.naturalWidth > 0) {
-      const flyT = clamp((t - 0.45) / 0.5, 0, 1);
-      const corners = [
-        [60, 60],
-        [W - 60, 60],
-        [60, H - 60],
-        [W - 60, H - 60]
+      const flyT = clamp((t - 0.45) / 0.45, 0, 1);
+      const ease = 1 - Math.pow(1 - flyT, 2);
+      const bladeSpecs = [
+        // Left 3 (pointing down-left)
+        { x0: 360, y0: 250, x1: 85, y1: 110, ang: 2.15 },
+        { x0: 380, y0: 260, x1: 170, y1: 155, ang: 2.05 },
+        { x0: 400, y0: 270, x1: 255, y1: 200, ang: 1.95 },
+        // Right 3 (pointing down-right)
+        { x0: 560, y0: 270, x1: 705, y1: 200, ang: 1.19 },
+        { x0: 580, y0: 260, x1: 790, y1: 155, ang: 1.09 },
+        { x0: 600, y0: 250, x1: 875, y1: 110, ang: 0.99 }
       ];
-      for (let i = 0; i < 12; i++) {
-        const c = corners[i % 4];
-        const delay = (i % 3) * 0.14;
-        const bt = clamp((flyT - delay) / 0.65, 0, 1);
-        if (bt <= 0) continue;
-        const targetX = 480 + ((i % 4) - 1.5) * 145;
-        const targetY = 310 + (Math.floor(i / 4) - 1) * 85;
-        const bx = lerp(c[0], targetX, bt);
-        const by = lerp(c[1], targetY, bt);
-        const ang = Math.atan2(targetY - c[1], targetX - c[0]);
-
+      for (const b of bladeSpecs) {
+        const bx = lerp(b.x0, b.x1, ease);
+        const by = lerp(b.y0, b.y1, ease);
         ctx.save();
-        ctx.strokeStyle = `rgba(255, 70, 150, ${0.55 * (1 - bt * 0.4)})`;
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(lerp(c[0], targetX, Math.max(0, bt - 0.25)), lerp(c[1], targetY, Math.max(0, bt - 0.25)));
-        ctx.lineTo(bx, by);
-        ctx.stroke();
-
         ctx.translate(bx, by);
-        ctx.rotate(ang);
-        ctx.shadowColor = '#ff3898';
+        ctx.rotate(b.ang);
+        ctx.shadowColor = '#d938ff';
         ctx.shadowBlur = 18;
-        ctx.drawImage(ASSETS.blade, -140, -37, 280, 74);
+        ctx.drawImage(ASSETS.blade, -110, -29, 220, 58);
         ctx.restore();
       }
     }
   }
 
-  // Top cinematic quote band + boss illust
-  const grad = ctx.createLinearGradient(0, 24, 0, 118);
-  grad.addColorStop(0, 'rgba(20, 6, 34, 0)');
-  grad.addColorStop(0.25, 'rgba(38, 10, 62, 0.92)');
-  grad.addColorStop(0.75, 'rgba(85, 16, 70, 0.9)');
-  grad.addColorStop(1, 'rgba(20, 6, 34, 0)');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 24, W, 94);
-
-  if (ASSETS.bossIllust.complete && ASSETS.bossIllust.naturalWidth > 0) {
-    const slideX = lerp(W - 210, W - 260, t);
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(0, 26, W, 90);
-    ctx.clip();
-    ctx.globalAlpha = clamp(alpha * 0.85, 0, 1);
-    ctx.drawImage(ASSETS.bossIllust, slideX, 12, 235, 135);
-    ctx.restore();
-  }
-
-  label(ctx, `패턴 개막 · ${cutIn.title}`, W / 2, 58, '#f5d89a', 22);
-  label(ctx, cutIn.quote, W / 2, 92, '#ffd4e8', 14);
+  // Centered glowing boss quote matching screenshots ("이제, 또렷이 보이는가" -> "네 역사의 끝을 목도하라")
+  const activeQuote = t < 0.55 ? '이제, 또렷이 보이는가' : cutIn.quote;
+  label(ctx, activeQuote, W / 2, 232, '#ffd6ea', 20);
   ctx.restore();
 }
 
@@ -693,13 +700,20 @@ function renderFrame(ctx, state) {
     ctx.translate((Math.random() - 0.5) * mag, (Math.random() - 0.5) * mag);
   }
 
-  // Camera zoom-in during 3:35 eclipse intro
+  // Camera zoom-in (gather) -> dramatic zoom-out (spread & blade eruption) during 3:35 intro
   if (stage.introCutIn?.eclipse && elapsed < stage.introCutIn.duration) {
     const t = elapsed / stage.introCutIn.duration;
-    const zoom = t < 0.7 ? lerp(1.0, 1.16, Math.sin((t / 0.7) * (Math.PI / 2))) : lerp(1.16, 1.0, (t - 0.7) / 0.3);
-    ctx.translate(480, 260);
+    let zoom = 1.0;
+    if (t < 0.45) {
+      zoom = lerp(1.0, 1.24, Math.sin((t / 0.45) * (Math.PI / 2)));
+    } else if (t < 0.78) {
+      zoom = lerp(1.24, 0.94, (t - 0.45) / 0.33);
+    } else {
+      zoom = lerp(0.94, 1.0, (t - 0.78) / 0.22);
+    }
+    ctx.translate(480, 250);
     ctx.scale(zoom, zoom);
-    ctx.translate(-480, -260);
+    ctx.translate(-480, -250);
   }
 
   ctx.fillStyle = '#07030d';
@@ -710,10 +724,6 @@ function renderFrame(ctx, state) {
   }
 
   drawAmbientParticles(ctx, animTime, Boolean(stage.worldState));
-
-  ctx.strokeStyle = stage.worldState ? 'rgba(255, 77, 132, 0.35)' : 'rgba(82, 232, 255, 0.3)';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(BOUNDS.left, BOUNDS.top, BOUNDS.right - BOUNDS.left, BOUNDS.bottom - BOUNDS.top);
 
   const envState = getEnvelopeState(stage.envelope, elapsed, stage.chain?.cut);
   drawEnvelope(ctx, envState, animTime);

@@ -402,6 +402,13 @@ function update(rawDt) {
   const s = state.stage;
   if (!s) return;
 
+  // Intro animated GIF layer (HTML <img> animates all 119 frames, unlike Canvas drawImage)
+  const gifEl = $('#introGifLayer');
+  if (gifEl) {
+    const showGif = Boolean(s.introCutIn?.eclipse && state.elapsed < s.introCutIn.duration);
+    gifEl.classList.toggle('hidden', !showGif);
+  }
+
   // Timeline cursor & time readout
   const pct = clamp((state.elapsed / s.duration) * 100, 0, 100);
   $('#timelineCursor').style.left = `${pct}%`;
