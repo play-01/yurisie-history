@@ -1,6 +1,6 @@
-import { SyncAudioEngine } from './audio.js?v=1.0.2';
-import { HISTORY_STAGES } from './data/historyPattern.js?v=1.0.2';
-import { BOUNDS, CENTER, getEnvelopeState, renderFrame } from './renderer.js?v=1.0.2';
+(() => {
+'use strict';
+const { SyncAudioEngine, HISTORY_STAGES, BOUNDS, CENTER, getEnvelopeState, renderFrame } = window.Yurisie;
 
 const $ = (sel) => document.querySelector(sel);
 const canvas = $('#gameCanvas');
@@ -28,6 +28,8 @@ const state = {
   elapsed: 0,
   animTime: 0,
   totalHits: 0,
+  maxHits: 1,
+  deathFlash: 0,
   bladeCooldown: 0,
   screenShake: 0,
   feedbackText: '',
@@ -146,7 +148,7 @@ function syncHud() {
   if (!s) return;
   $('#stageLabel').textContent = `${state.step + 1} / ${HISTORY_STAGES.length} 구간`;
   $('#progressFill').style.width = `${((state.step + 1) / HISTORY_STAGES.length) * 100}%`;
-  $('#hitCount').textContent = String(state.totalHits);
+  $('#hitCount').textContent = state.maxHits > 0 ? `${state.totalHits} / ${state.maxHits}` : `${state.totalHits} / ∞`;
   $('#speedLabel').textContent = `${state.speedScale}x`;
   $('#cueText').innerHTML = `<strong>가이드:</strong> ${s.message}`;
 
@@ -220,6 +222,24 @@ function onHit(reason) {
   audio.playTone('hit');
   setFeedback(`피격! (${reason})`, 1.4);
   syncHud();
+
+  if (state.maxHits > 0 && state.totalHits >= state.maxHits) {
+    state.active = false;
+    state.deathFlash = 0.9;
+    state.screenShake = 0.45;
+    audio.syncPlayback(false, true);
+    audio.playVoice('atk_4', { allowInterrupt: true });
+    setTimeout(() => {
+      if (!state.active) {
+        showOverlay(
+          '"그 무력함에 끝없이 절망하라. 네 역사의 끝을 목도하라!"',
+          '사망 — 역사의 끝 파훼 실패',
+          `${reason}으로 치명상을 입었습니다. 1구간부터 다시 도전합니다.`,
+          '처음부터 다시 (Enter / 클릭)'
+        );
+      }
+    }, 520);
+  }
 }
 
 function checkAttackHit(a) {
@@ -299,6 +319,7 @@ function update(rawDt) {
   state.animTime += rawDt;
   state.feedbackTimer = Math.max(0, state.feedbackTimer - rawDt);
   state.screenShake = Math.max(0, state.screenShake - rawDt);
+  state.deathFlash = Math.max(0, state.deathFlash - rawDt);
 
   if (!state.active || state.paused) return;
 
@@ -326,14 +347,18 @@ function update(rawDt) {
       state.afterimages.push({ x: p.x, y: p.y, z: p.z, facing: p.facing, frame: 18, alpha: 0.48 });
     }
   } else {
-    const maxVx = p.running ? 405 : 230;
-    const maxVy = p.running ? 310 : 190;
+    const maxVx = p.running ? 430 : 255;
+    const maxVy = p.running ? 330 : 210;
     const norm = Math.hypot(dx, dy) || 1;
     const targetVx = (dx / norm) * maxVx;
     const targetVy = (dy / norm) * maxVy;
-    const accel = hasInput ? (p.running ? 20 : 25) : 24;
+    const accel = hasInput ? (p.running ? 28 : 34) : 42;
     p.vx = lerp(p.vx, targetVx, Math.min(1, accel * rawDt));
     p.vy = lerp(p.vy, targetVy, Math.min(1, accel * rawDt));
+    if (!hasInput && Math.hypot(p.vx, p.vy) < 12) {
+      p.vx = 0;
+      p.vy = 0;
+    }
 
     if (dx !== 0) p.facing = dx;
     if (hasInput) {
@@ -528,6 +553,11 @@ $('#btnGodMode').addEventListener('click', (e) => {
   e.currentTarget.textContent = `무적 연습: ${state.godMode ? 'ON' : 'OFF'}`;
 });
 
+$('#maxHitsSelect').addEventListener('change', (e) => {
+  state.maxHits = Number(e.target.value);
+  syncHud();
+});
+
 $('#btnAudio').addEventListener('click', (e) => {
   const next = !audio.enabled;
   audio.setEnabled(next);
@@ -548,3 +578,4 @@ function loop(now) {
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
+})();

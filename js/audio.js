@@ -1,5 +1,9 @@
 // Synchronized Audio Engine (BGM, Voice Ducking, Telegraph & Impact SFX)
-export const VOICE_DATA = {
+(() => {
+'use strict';
+window.Yurisie = window.Yurisie || {};
+
+const VOICE_DATA = {
   history_start: {
     file: 'assets/audio/voice_history_start.mp3',
     speaker: '유리지에',
@@ -31,7 +35,7 @@ export const VOICE_DATA = {
   }
 };
 
-export class SyncAudioEngine {
+class SyncAudioEngine {
   constructor() {
     this.enabled = true;
     this.speedScale = 1.0;
@@ -267,3 +271,7 @@ export class SyncAudioEngine {
     } catch (_) {}
   }
 }
+
+window.Yurisie.VOICE_DATA = VOICE_DATA;
+window.Yurisie.SyncAudioEngine = SyncAudioEngine;
+})();

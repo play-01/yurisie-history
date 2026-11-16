@@ -1,8 +1,12 @@
-// High-Clarity Synchronized Canvas Renderer
-export const W = 960;
-export const H = 540;
-export const CENTER = [480, 340];
-export const BOUNDS = { left: 70, right: 890, top: 195, bottom: 495 };
+// High-Polish DNF-Style Synchronized Canvas Renderer
+(() => {
+'use strict';
+window.Yurisie = window.Yurisie || {};
+
+const W = 960;
+const H = 540;
+const CENTER = [480, 340];
+const BOUNDS = { left: 70, right: 890, top: 195, bottom: 495 };
 const TAU = Math.PI * 2;
 
 const loadImg = (src) => {
@@ -11,7 +15,7 @@ const loadImg = (src) => {
   return img;
 };
 
-export const ASSETS = {
+const ASSETS = {
   bossSheet: loadImg('assets/boss_sheet.png'),
   bossIllust: loadImg('assets/boss_illust.webp'),
   arenaLife: loadImg('assets/arena_life.png'),
@@ -21,11 +25,31 @@ export const ASSETS = {
   flowerBlue: loadImg('assets/obj_flower_blue.png'),
   flowerRed: loadImg('assets/obj_flower_red.png'),
   blade: loadImg('assets/obj_blade.png'),
-  chain: loadImg('assets/obj_chain.png')
+  chain: loadImg('assets/obj_chain.png'),
+  shackle: loadImg('assets/obj_shackle.png'),
+  vortex: loadImg('assets/obj_vortex.png'),
+  introGif: loadImg('assets/img10.gif'),
+  mIdleSword: loadImg('assets/yurisie_motions/motion_idle_sword.png'),
+  mDiveSlash: loadImg('assets/yurisie_motions/motion_dive_slash.png'),
+  mSpinSlash: loadImg('assets/yurisie_motions/motion_spin_slash.png'),
+  mCoilOrb: loadImg('assets/yurisie_motions/motion_coil_orb.png'),
+  mTailRelease: loadImg('assets/yurisie_motions/motion_tail_release.png'),
+  mSwordStance: loadImg('assets/yurisie_motions/motion_sword_stance.png'),
+  mLowDash: loadImg('assets/yurisie_motions/motion_low_dash.png')
 };
 
 const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
 const lerp = (a, b, t) => a + (b - a) * clamp(t, 0, 1);
+
+// Ambient drifting embers / petals
+const ambientParticles = Array.from({ length: 28 }, (_, i) => ({
+  x: (i * 137) % W,
+  y: (i * 89) % H,
+  vx: -12 - (i % 5) * 6,
+  vy: 14 + (i % 4) * 5,
+  size: 2 + (i % 3) * 1.4,
+  phase: i * 0.7
+}));
 
 function oval(ctx, x, y, rx, ry, fill, stroke, width = 1) {
   ctx.beginPath();
@@ -47,30 +71,28 @@ function label(ctx, text, x, y, color = '#fff', size = 14) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.lineWidth = 4;
-  ctx.strokeStyle = 'rgba(6, 2, 12, 0.9)';
+  ctx.strokeStyle = 'rgba(6, 2, 12, 0.92)';
   ctx.strokeText(text, x, y);
   ctx.fillStyle = color;
   ctx.fillText(text, x, y);
   ctx.restore();
 }
 
-export function getEnvelopeState(env, elapsed, chainCut) {
+function getEnvelopeState(env, elapsed, chainCut) {
   if (!env) return null;
   let x = env.from[0];
   let y = env.from[1];
   if (env.to && env.endT > env.startT) {
     const t = clamp((elapsed - (env.startT || 0)) / (env.endT - (env.startT || 0)), 0, 1);
-    x = env.from[0] + (env.to[0] - env.from[0]) * t;
-    y = env.from[1] + (env.to[1] - env.from[1]) * t;
+    x = lerp(env.from[0], env.to[0], t);
+    y = lerp(env.from[1], env.to[1], t);
   }
   let r = env.r;
   if (env.shrinkTo && env.endT > env.startT) {
     const t = clamp((elapsed - (env.startT || 0)) / (env.endT - (env.startT || 0)), 0, 1);
-    r = env.r + (env.shrinkTo - env.r) * t;
+    r = lerp(env.r, env.shrinkTo, t);
   }
-  if (env.widenOnCut && chainCut) {
-    r += 65;
-  }
+  if (env.widenOnCut && chainCut) r += 65;
   return { x, y, r };
 }
 
@@ -82,21 +104,24 @@ function drawEnvelope(ctx, envState, animTime) {
   ctx.beginPath();
   ctx.rect(0, 0, W, H);
   ctx.ellipse(x, y, r, r * 0.74, 0, 0, TAU, true);
-  ctx.fillStyle = 'rgba(145, 22, 82, 0.24)';
+  ctx.fillStyle = 'rgba(120, 14, 68, 0.34)';
   ctx.fill();
 
+  ctx.shadowColor = '#ff4d94';
+  ctx.shadowBlur = 14;
   oval(ctx, x, y, r, r * 0.74, null, '#ff77b5', 2.5);
+  ctx.shadowBlur = 0;
 
-  const count = 14;
+  const count = 16;
   for (let i = 0; i < count; i++) {
-    const ang = (i / count) * TAU + animTime * 1.1;
+    const ang = (i / count) * TAU + animTime * 1.25;
     const bx = x + Math.cos(ang) * r;
     const by = y + Math.sin(ang) * r * 0.74;
     if (ASSETS.blade.complete && ASSETS.blade.naturalWidth > 0) {
       ctx.save();
       ctx.translate(bx, by);
-      ctx.rotate(ang + Math.PI / 2);
-      ctx.drawImage(ASSETS.blade, -15, -15, 30, 30);
+      ctx.rotate(ang);
+      ctx.drawImage(ASSETS.blade, -54, -14, 108, 28);
       ctx.restore();
     } else {
       oval(ctx, bx, by, 7, 7, '#ff77b5', '#fff', 1);
@@ -105,11 +130,25 @@ function drawEnvelope(ctx, envState, animTime) {
   ctx.restore();
 }
 
+function drawRuneRing(ctx, x, y, r, ratio, color, animTime, dir = 1) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(1, ratio);
+  ctx.rotate(animTime * 0.9 * dir);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.6;
+  ctx.setLineDash([10, 8]);
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.86, 0, TAU);
+  ctx.stroke();
+  ctx.restore();
+}
+
 function drawAttacks(ctx, stage, elapsed, animTime) {
   for (const a of stage.attacks) {
     if (elapsed < a.warn) continue;
     const postFire = elapsed - a.fire;
-    if (postFire > 0.32) continue;
+    if (postFire > 0.36) continue;
 
     const progress = clamp((elapsed - a.warn) / Math.max(0.05, a.fire - a.warn), 0, 1);
     const firing = elapsed >= a.fire;
@@ -117,49 +156,68 @@ function drawAttacks(ctx, stage, elapsed, animTime) {
 
     if (a.type === 'safeSpot') {
       const [sx, sy] = a.point;
-      oval(
-        ctx,
-        sx,
-        sy,
-        a.r,
-        a.r * 0.65,
-        'rgba(82, 232, 255, 0.13)',
-        nearFire ? '#ffffff' : '#52e8ff',
-        2.5
-      );
+      ctx.save();
+      ctx.shadowColor = '#52e8ff';
+      ctx.shadowBlur = 12;
+      oval(ctx, sx, sy, a.r, a.r * 0.65, 'rgba(82, 232, 255, 0.11)', nearFire ? '#ffffff' : '#52e8ff', 2.2);
+      drawRuneRing(ctx, sx, sy, a.r, 0.65, 'rgba(130, 244, 255, 0.55)', animTime, 1);
+      ctx.restore();
       if (a.label) label(ctx, a.label, sx, sy - a.r * 0.72, '#8ef3ff', 13);
       continue;
     }
 
     if (a.type === 'floorPad') {
-      const alpha = firing ? 0.65 * (1 - postFire / 0.32) : 0.22 + progress * 0.28;
-      oval(ctx, a.x, a.y, a.r, a.r * 0.68, `rgba(255, 50, 95, ${alpha * 0.45})`, nearFire ? '#fff' : '#ff5588', 2);
-      oval(ctx, a.x, a.y, a.r * progress, a.r * 0.68 * progress, `rgba(255, 65, 110, ${alpha})`, null);
+      const fade = firing ? 1 - postFire / 0.36 : 1;
+      const alpha = firing ? 0.75 * fade : 0.22 + progress * 0.32;
+      ctx.save();
+      oval(ctx, a.x, a.y, a.r, a.r * 0.68, `rgba(255, 40, 88, ${alpha * 0.4})`, nearFire ? '#fff' : '#ff4d84', 2);
+      oval(ctx, a.x, a.y, a.r * progress, a.r * 0.68 * progress, `rgba(255, 58, 108, ${alpha})`, null);
+      drawRuneRing(ctx, a.x, a.y, a.r, 0.68, `rgba(255, 165, 195, ${0.45 * fade})`, animTime, -1);
+      if (firing) {
+        const blastR = a.r * (1 + postFire * 0.8);
+        oval(ctx, a.x, a.y, blastR, blastR * 0.68, null, `rgba(255, 220, 235, ${fade})`, 4);
+      }
+      ctx.restore();
       if (a.label && !firing) label(ctx, a.label, a.x, a.y - a.r * 0.72, '#ff9ec0', 12);
     } else if (a.type === 'purpleVoid') {
-      // Safe inside r, lethal outside r
+      const fade = firing ? 1 - postFire / 0.36 : 1;
       ctx.save();
       ctx.beginPath();
       ctx.rect(BOUNDS.left, BOUNDS.top, BOUNDS.right - BOUNDS.left, BOUNDS.bottom - BOUNDS.top);
       ctx.ellipse(a.x, a.y, a.r, a.r * 0.68, 0, 0, TAU, true);
-      const alpha = firing ? 0.7 * (1 - postFire / 0.32) : 0.18 + progress * 0.34;
-      ctx.fillStyle = `rgba(175, 60, 255, ${alpha})`;
+      const alpha = firing ? 0.76 * fade : 0.18 + progress * 0.36;
+      ctx.fillStyle = `rgba(168, 48, 255, ${alpha})`;
       ctx.fill();
-      oval(ctx, a.x, a.y, a.r, a.r * 0.68, 'rgba(90, 240, 210, 0.12)', nearFire ? '#fff' : '#7efcd2', 2.5);
-      if (a.label && !firing) label(ctx, a.label, a.x, a.y - a.r * 0.72, '#a7f3d0', 12);
+      oval(ctx, a.x, a.y, a.r, a.r * 0.68, 'rgba(90, 240, 210, 0.1)', nearFire ? '#fff' : '#7efcd2', 2.5);
+      drawRuneRing(ctx, a.x, a.y, a.r, 0.68, 'rgba(126, 252, 210, 0.5)', animTime, 1);
       ctx.restore();
+      if (a.label && !firing) label(ctx, a.label, a.x, a.y - a.r * 0.72, '#a7f3d0', 12);
     } else if (a.type === 'pillar') {
       const w = a.x2 - a.x1;
       const h = a.y2 - a.y1;
-      const alpha = firing ? 0.72 * (1 - postFire / 0.32) : 0.18 + progress * 0.28;
+      const fade = firing ? 1 - postFire / 0.36 : 1;
+      const alpha = firing ? 0.82 * fade : 0.16 + progress * 0.32;
       ctx.save();
-      ctx.fillStyle = `rgba(180, 70, 255, ${alpha * 0.45})`;
+      const grad = ctx.createLinearGradient(a.x1, 0, a.x2, 0);
+      grad.addColorStop(0, `rgba(140, 35, 225, ${alpha * 0.35})`);
+      grad.addColorStop(0.5, `rgba(215, 110, 255, ${alpha})`);
+      grad.addColorStop(1, `rgba(140, 35, 225, ${alpha * 0.35})`);
+      ctx.fillStyle = grad;
       ctx.fillRect(a.x1, a.y1, w, h);
-      const fillH = h * progress;
-      ctx.fillStyle = `rgba(210, 95, 255, ${alpha})`;
-      ctx.fillRect(a.x1, a.y2 - fillH, w, fillH);
-      ctx.strokeStyle = nearFire ? '#ffffff' : '#d68fff';
-      ctx.lineWidth = nearFire ? 3 : 1.8;
+
+      if (!firing) {
+        const fillH = h * progress;
+        ctx.fillStyle = `rgba(225, 130, 255, ${alpha * 0.85})`;
+        ctx.fillRect(a.x1, a.y2 - fillH, w, fillH);
+      } else {
+        // Core white/violet sword beam flash
+        const beamW = w * 0.36 * fade;
+        ctx.fillStyle = `rgba(255, 240, 255, ${0.9 * fade})`;
+        ctx.fillRect((a.x1 + a.x2) / 2 - beamW / 2, a.y1, beamW, h);
+      }
+
+      ctx.strokeStyle = nearFire ? '#ffffff' : `rgba(216, 145, 255, ${fade})`;
+      ctx.lineWidth = nearFire ? 3 : 1.6;
       ctx.strokeRect(a.x1, a.y1, w, h);
       if (a.seq && !firing) {
         label(ctx, `${a.seq}`, (a.x1 + a.x2) / 2, a.y1 + 22, '#f5d89a', 15);
@@ -168,47 +226,66 @@ function drawAttacks(ctx, stage, elapsed, animTime) {
     } else if (a.type === 'rect') {
       const w = a.x2 - a.x1;
       const h = a.y2 - a.y1;
-      const alpha = firing ? 0.68 * (1 - postFire / 0.32) : 0.2 + progress * 0.3;
+      const fade = firing ? 1 - postFire / 0.36 : 1;
+      const alpha = firing ? 0.72 * fade : 0.2 + progress * 0.3;
       ctx.save();
-      ctx.fillStyle = `rgba(255, 55, 95, ${alpha * 0.4})`;
+      ctx.fillStyle = `rgba(255, 45, 90, ${alpha * 0.45})`;
       ctx.fillRect(a.x1, a.y1, w, h);
-      ctx.fillStyle = `rgba(255, 65, 110, ${alpha})`;
-      ctx.fillRect(a.x1, a.y1, w * progress, h);
-      ctx.strokeStyle = nearFire ? '#fff' : '#ff6b98';
+      ctx.fillStyle = `rgba(255, 70, 115, ${alpha})`;
+      ctx.fillRect(a.x1, a.y1, w * (firing ? 1 : progress), h);
+      ctx.strokeStyle = nearFire ? '#fff' : `rgba(255, 110, 155, ${fade})`;
       ctx.lineWidth = 2;
       ctx.strokeRect(a.x1, a.y1, w, h);
       if (a.label && !firing) label(ctx, a.label, (a.x1 + a.x2) / 2, a.y1 + 22, '#ffb3c9', 13);
       ctx.restore();
     } else if (a.type === 'ring') {
+      const fade = firing ? 1 - postFire / 0.36 : 1;
       ctx.save();
       ctx.beginPath();
       ctx.ellipse(a.x, a.y, a.outerR, a.outerR * 0.72, 0, 0, TAU);
       ctx.ellipse(a.x, a.y, a.innerR, a.innerR * 0.72, 0, 0, TAU, true);
-      const alpha = firing ? 0.68 * (1 - postFire / 0.32) : 0.16 + progress * 0.3;
-      ctx.fillStyle = `rgba(255, 70, 120, ${alpha})`;
+      const alpha = firing ? 0.74 * fade : 0.18 + progress * 0.32;
+      ctx.fillStyle = `rgba(255, 65, 120, ${alpha})`;
       ctx.fill();
-      oval(ctx, a.x, a.y, a.innerR, a.innerR * 0.72, null, nearFire ? '#fff' : '#ff7aa8', 2);
+      oval(ctx, a.x, a.y, a.innerR, a.innerR * 0.72, null, nearFire ? '#fff' : '#ff7aa8', 2.2);
       ctx.restore();
     } else if (a.type === 'slash') {
+      const fade = firing ? 1 - postFire / 0.36 : 1;
       ctx.save();
       ctx.translate(a.x, a.y);
       ctx.rotate(a.angle || 0);
-      const len = 1100;
-      const alpha = firing ? 0.85 * (1 - postFire / 0.32) : 0.18 + progress * 0.34;
-      ctx.fillStyle = `rgba(255, 45, 95, ${alpha * 0.45})`;
-      ctx.fillRect(-len / 2, -a.width / 2, len, a.width);
-      ctx.fillStyle = firing ? '#ffffff' : `rgba(255, 95, 145, ${alpha})`;
-      ctx.fillRect(-len / 2, -(a.width * progress) / 2, len, a.width * progress);
-      ctx.strokeStyle = nearFire ? '#ffffff' : '#ff85b3';
-      ctx.lineWidth = 1.6;
-      ctx.strokeRect(-len / 2, -a.width / 2, len, a.width);
+      const len = 1150;
+      if (!firing) {
+        const alpha = 0.2 + progress * 0.36;
+        ctx.fillStyle = `rgba(255, 36, 92, ${alpha * 0.42})`;
+        ctx.fillRect(-len / 2, -a.width / 2, len, a.width);
+        ctx.fillStyle = `rgba(255, 85, 140, ${alpha})`;
+        ctx.fillRect(-len / 2, -(a.width * progress) / 2, len, a.width * progress);
+        ctx.strokeStyle = nearFire ? '#ffffff' : '#ff85b3';
+        ctx.lineWidth = nearFire ? 2.5 : 1.5;
+        ctx.strokeRect(-len / 2, -a.width / 2, len, a.width);
+      } else {
+        // DNF black-core abyssal slash + magenta aura + white core flash
+        ctx.shadowColor = '#ff2a85';
+        ctx.shadowBlur = 22 * fade;
+        ctx.fillStyle = `rgba(18, 4, 30, ${0.92 * fade})`;
+        ctx.fillRect(-len / 2, -(a.width * 0.62), len, a.width * 1.24);
+        ctx.fillStyle = `rgba(255, 70, 165, ${0.72 * fade})`;
+        ctx.fillRect(-len / 2, -(a.width * 0.34), len, a.width * 0.68);
+        ctx.fillStyle = `rgba(255, 245, 255, ${0.95 * fade})`;
+        ctx.fillRect(-len / 2, -3 * fade, len, 6 * fade);
+      }
       ctx.restore();
       if (a.seq && !firing) {
         const offset = (a.seq - 2.5) * 44;
         label(ctx, `①②③④`[a.seq - 1] || `${a.seq}`, a.x + Math.cos(a.angle || 0) * offset, a.y + Math.sin(a.angle || 0) * offset, '#ffe699', 16);
       }
     } else if (a.type === 'quake') {
-      const r = 420 * progress;
+      const fade = firing ? 1 - postFire / 0.36 : 1;
+      const r = firing ? 420 + postFire * 240 : 420 * progress;
+      ctx.save();
+      ctx.shadowColor = '#ff4d84';
+      ctx.shadowBlur = 16;
       oval(
         ctx,
         CENTER[0],
@@ -216,9 +293,10 @@ function drawAttacks(ctx, stage, elapsed, animTime) {
         r,
         r * 0.62,
         null,
-        firing ? '#ffffff' : nearFire ? '#ffe49e' : '#ff5588',
-        firing ? 6 : 3
+        firing ? `rgba(255, 255, 255, ${fade})` : nearFire ? '#ffe49e' : '#ff5588',
+        firing ? 6 * fade : 3
       );
+      ctx.restore();
       if (!firing) {
         label(ctx, a.label || '점프(C) 또는 백스텝(↓+C)!', CENTER[0], 172 + Math.sin(animTime * 14) * 3, '#ffe49e', 16);
       }
@@ -226,26 +304,56 @@ function drawAttacks(ctx, stage, elapsed, animTime) {
   }
 }
 
-function drawChainAndFlower(ctx, stage, elapsed, animTime) {
+function drawTexturedChain(ctx, x1, y1, x2, y2) {
+  const dist = Math.hypot(x2 - x1, y2 - y1);
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  if (ASSETS.chain.complete && ASSETS.chain.naturalWidth > 0) {
+    const step = 28;
+    const count = Math.max(2, Math.floor(dist / step));
+    ctx.save();
+    ctx.shadowColor = '#69f0ae';
+    ctx.shadowBlur = 10;
+    for (let i = 0; i <= count; i++) {
+      const t = i / count;
+      const cx = lerp(x1, x2, t);
+      const cy = lerp(y1, y2, t);
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(angle);
+      ctx.drawImage(ASSETS.chain, -15, -9, 30, 18);
+      ctx.restore();
+    }
+    ctx.restore();
+  } else {
+    ctx.save();
+    ctx.strokeStyle = '#69f0ae';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function drawChainAndFlower(ctx, stage, elapsed, animTime, p) {
   const ch = stage.chain;
   if (ch && elapsed >= ch.warn - 0.3) {
     if (!ch.cut) {
       const [ax, ay] = ch.anchor;
       const [tx, ty] = ch.safeTarget;
-      ctx.save();
-      ctx.strokeStyle = '#69f0ae';
-      ctx.lineWidth = 4;
-      ctx.setLineDash([8, 6]);
-      ctx.beginPath();
-      ctx.moveTo(ax, ay);
-      ctx.lineTo(tx, ty);
-      ctx.stroke();
-      ctx.restore();
+      // Chain physically tethers from anchor to the player's waist!
+      drawTexturedChain(ctx, ax, ay, p.x, p.y - 24);
 
-      oval(ctx, tx, ty, 38, 25, 'rgba(105, 240, 174, 0.16)', '#69f0ae', 2.5);
+      if (ASSETS.shackle.complete && ASSETS.shackle.naturalWidth > 0) {
+        ctx.drawImage(ASSETS.shackle, ax - 20, ay - 20, 40, 40);
+        ctx.drawImage(ASSETS.shackle, p.x - 16, p.y - 40, 32, 32);
+      }
+
+      oval(ctx, tx, ty, 38, 25, 'rgba(105, 240, 174, 0.14)', '#69f0ae', 2.5);
+      drawRuneRing(ctx, tx, ty, 38, 0.65, 'rgba(105, 240, 174, 0.55)', animTime, 1);
       label(ctx, '사슬 반대편으로 이동!', tx, ty - 34, '#69f0ae', 12);
 
-      // Slash guide line
       const prog = clamp((elapsed - ch.warn) / Math.max(0.1, ch.fire - ch.warn), 0, 1);
       ctx.save();
       ctx.strokeStyle = `rgba(255, 110, 170, ${0.35 + prog * 0.65})`;
@@ -277,20 +385,53 @@ function drawFlower(ctx, pt, color, animTime) {
   const bob = Math.sin(animTime * 5) * 4;
   const ringR = 32 + Math.sin(animTime * 8) * 3;
   const stroke = color === 'blue' ? '#52e8ff' : '#ff4d84';
+  ctx.save();
+  ctx.shadowColor = stroke;
+  ctx.shadowBlur = 14;
   oval(ctx, fx, fy, ringR, ringR * 0.6, 'rgba(255,255,255,0.08)', stroke, 2);
+  drawRuneRing(ctx, fx, fy, ringR, 0.6, stroke, animTime, -1);
   const img = color === 'blue' ? ASSETS.flowerBlue : ASSETS.flowerRed;
   if (img.complete && img.naturalWidth > 0) {
     ctx.drawImage(img, fx - 24, fy - 42 + bob, 48, 48);
   }
-  label(ctx, color === 'blue' ? '푸른 꽃 습득' : '붉은 꽃 습득', fx, fy - 52 + bob, stroke, 12);
+  ctx.restore();
+  label(ctx, color === 'blue' ? '푸른 꽃 습득' : '붉은 꽃 습득', fx, fy - 54 + bob, stroke, 12);
 }
 
-function drawBoss(ctx, x, y, counterReady, animTime) {
+function pickBossMotionSprite(stage, elapsed, counterReady) {
+  if (stage.introCutIn?.eclipse && elapsed < stage.introCutIn.duration) {
+    const t = elapsed / stage.introCutIn.duration;
+    if (t < 0.38) return { img: ASSETS.mDiveSlash, scale: 0.32 };
+    if (t < 0.72) return { img: ASSETS.mTailRelease, scale: 0.28 };
+    return { img: ASSETS.mSwordStance, scale: 0.42 };
+  }
+  if (counterReady) return { img: ASSETS.mLowDash, scale: 0.36 };
+  const activeSlash = stage.attacks.some((a) => a.type === 'slash' && elapsed >= a.fire && elapsed <= a.fire + 0.35);
+  if (activeSlash) return { img: ASSETS.mSpinSlash, scale: 0.28 };
+  if (stage.chain && !stage.chain.cut && elapsed >= stage.chain.warn) {
+    return { img: ASSETS.mCoilOrb, scale: 0.38 };
+  }
+  if (stage.worldState) return { img: ASSETS.mIdleSword, scale: 0.28 };
+  return null;
+}
+
+function drawBoss(ctx, x, y, counterReady, animTime, stage, elapsed) {
   const bob = Math.sin(animTime * 3.2) * 4;
   ctx.save();
   oval(ctx, x, y, 76, 20, 'rgba(10, 4, 18, 0.72)', counterReady ? '#ffd984' : '#c8287866', 2);
 
-  if (ASSETS.bossSheet.complete && ASSETS.bossSheet.naturalWidth > 0) {
+  const motion = pickBossMotionSprite(stage, elapsed, counterReady);
+  if (motion && motion.img.complete && motion.img.naturalWidth > 0) {
+    const dw = motion.img.naturalWidth * motion.scale;
+    const dh = motion.img.naturalHeight * motion.scale;
+    ctx.save();
+    ctx.translate(x, y + bob);
+    if (x < 400) ctx.scale(-1, 1);
+    ctx.shadowBlur = counterReady ? 30 : 20;
+    ctx.shadowColor = counterReady ? '#ffda75' : '#ff1e78';
+    ctx.drawImage(motion.img, -dw * 0.5, -dh * 0.88, dw, dh);
+    ctx.restore();
+  } else if (ASSETS.bossSheet.complete && ASSETS.bossSheet.naturalWidth > 0) {
     const fw = 571;
     const fh = 391;
     const frameIdx = Math.floor(animTime * 10) % 8;
@@ -300,7 +441,7 @@ function drawBoss(ctx, x, y, counterReady, animTime) {
     ctx.save();
     ctx.translate(x, y + bob);
     if (x < 400) ctx.scale(-1, 1);
-    ctx.shadowBlur = counterReady ? 28 : 16;
+    ctx.shadowBlur = counterReady ? 30 : 18;
     ctx.shadowColor = counterReady ? '#ffda75' : '#ff1e78';
     ctx.drawImage(ASSETS.bossSheet, frameIdx * fw, 0, fw, fh, -dw * 0.56, -dh * 0.9, dw, dh);
     ctx.restore();
@@ -308,8 +449,23 @@ function drawBoss(ctx, x, y, counterReady, animTime) {
 
   if (counterReady) {
     const pulseR = 88 + Math.sin(animTime * 16) * 8;
-    oval(ctx, x, y, pulseR, pulseR * 0.46, 'rgba(255, 208, 100, 0.22)', '#ffe49e', 3);
-    label(ctx, '지금 평타 카운터! (X)', x, y - 160, '#ffe699', 18);
+    oval(ctx, x, y, pulseR, pulseR * 0.46, 'rgba(255, 208, 100, 0.24)', '#ffe49e', 3);
+    // Gold cross-glint
+    ctx.save();
+    ctx.translate(x, y - 122 + bob);
+    ctx.shadowColor = '#ffe49e';
+    ctx.shadowBlur = 16;
+    ctx.strokeStyle = '#fff5cc';
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.moveTo(-40, 0);
+    ctx.lineTo(40, 0);
+    ctx.moveTo(0, -26);
+    ctx.lineTo(0, 26);
+    ctx.stroke();
+    oval(ctx, 0, 0, 9, 9, '#ffffff', '#ffae00', 2);
+    ctx.restore();
+    label(ctx, '지금 평타 카운터! (X)', x, y - 166, '#ffe699', 18);
   }
   ctx.restore();
 }
@@ -343,6 +499,8 @@ function drawPlayer(ctx, state) {
       ctx.globalAlpha = ghost.alpha;
       ctx.translate(ghost.x, ghost.y - ghost.z);
       ctx.scale(ghost.facing, 1);
+      ctx.shadowColor = '#38bdf8';
+      ctx.shadowBlur = 10;
       ctx.drawImage(ASSETS.playerSheet, ghost.frame * 160, 0, 160, 150, -66 * scale, -114 * scale, dw, dh);
       ctx.restore();
     }
@@ -368,6 +526,8 @@ function drawPlayer(ctx, state) {
   }
 
   if (p.attack > 0) {
+    ctx.shadowColor = '#52e8ff';
+    ctx.shadowBlur = 16;
     ctx.beginPath();
     ctx.arc(14, -26, 62, 4.6, 7.6);
     ctx.strokeStyle = `rgba(130, 240, 255, ${p.attack / 0.28})`;
@@ -380,74 +540,168 @@ function drawPlayer(ctx, state) {
 function drawIntroCutIn(ctx, cutIn, elapsed, animTime) {
   if (!cutIn || elapsed > cutIn.duration) return;
   const t = elapsed / cutIn.duration;
-  const alpha = t < 0.12 ? t / 0.12 : t > 0.85 ? (1 - t) / 0.15 : 1;
+  const alpha = t < 0.08 ? t / 0.08 : t > 0.88 ? (1 - t) / 0.12 : 1;
 
   ctx.save();
   ctx.globalAlpha = clamp(alpha, 0, 1);
 
   if (cutIn.eclipse) {
-    // Darken arena during 3:35 ~ 3:39 energy gather
-    ctx.fillStyle = `rgba(8, 2, 18, ${0.56 * clamp(alpha, 0, 1)})`;
+    // Actual DNF 960x541 animated cutscene GIF backdrop if loaded
+    if (ASSETS.introGif.complete && ASSETS.introGif.naturalWidth > 0) {
+      ctx.save();
+      ctx.globalAlpha = clamp(alpha * 0.55, 0, 1);
+      ctx.drawImage(ASSETS.introGif, 0, 0, W, H);
+      ctx.restore();
+    }
+    // Darken arena
+    ctx.fillStyle = `rgba(6, 2, 14, ${0.42 * clamp(alpha, 0, 1)})`;
     ctx.fillRect(0, 0, W, H);
 
-    // Dark-purple eclipse / moon orb behind boss
-    const orbR = 78 + Math.sin(animTime * 6) * 4;
-    const orbGrad = ctx.createRadialGradient(480, 235, 14, 480, 235, orbR * 1.4);
-    orbGrad.addColorStop(0, 'rgba(14, 4, 28, 0.95)');
-    orbGrad.addColorStop(0.58, 'rgba(138, 32, 196, 0.72)');
-    orbGrad.addColorStop(0.82, 'rgba(255, 62, 136, 0.42)');
+    // Boss descends from y=115 to y=248 during t=0..0.35
+    const descentT = clamp(t / 0.35, 0, 1);
+    const bossY = lerp(115, 248, 1 - Math.pow(1 - descentT, 3));
+
+    // Sudden wing/aura spread burst around t=0.35..0.65
+    if (t >= 0.32) {
+      const spreadT = clamp((t - 0.32) / 0.28, 0, 1);
+      const wingSpan = lerp(30, 210, 1 - Math.pow(1 - spreadT, 2));
+      ctx.save();
+      ctx.translate(480, bossY - 45);
+      for (const dir of [-1, 1]) {
+        const wg = ctx.createLinearGradient(0, 0, dir * wingSpan, -50);
+        wg.addColorStop(0, 'rgba(180, 30, 120, 0.82)');
+        wg.addColorStop(0.6, 'rgba(95, 14, 140, 0.55)');
+        wg.addColorStop(1, 'rgba(30, 4, 60, 0)');
+        ctx.fillStyle = wg;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo(dir * wingSpan * 0.55, -75, dir * wingSpan, -25);
+        ctx.quadraticCurveTo(dir * wingSpan * 0.65, 35, 0, 22);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    // Dark-purple eclipse orb behind boss
+    const orbR = 84 + Math.sin(animTime * 6) * 4;
+    const orbGrad = ctx.createRadialGradient(480, bossY - 14, 14, 480, bossY - 14, orbR * 1.45);
+    orbGrad.addColorStop(0, 'rgba(10, 2, 22, 0.96)');
+    orbGrad.addColorStop(0.55, 'rgba(138, 32, 196, 0.8)');
+    orbGrad.addColorStop(0.82, 'rgba(255, 62, 136, 0.48)');
     orbGrad.addColorStop(1, 'rgba(138, 32, 196, 0)');
     ctx.fillStyle = orbGrad;
     ctx.beginPath();
-    ctx.arc(480, 235, orbR * 1.4, 0, TAU);
+    ctx.arc(480, bossY - 14, orbR * 1.45, 0, TAU);
     ctx.fill();
 
-    // Swirling inward purple mist arcs
-    for (let i = 0; i < 4; i++) {
-      const ang = animTime * 2.4 + (i * Math.PI) / 2;
-      ctx.strokeStyle = 'rgba(205, 110, 255, 0.55)';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(480, 235, orbR * (0.7 + (i % 2) * 0.25), ang, ang + 1.4);
-      ctx.stroke();
+    if (ASSETS.vortex.complete && ASSETS.vortex.naturalWidth > 0) {
+      ctx.save();
+      ctx.translate(480, bossY - 14);
+      ctx.rotate(animTime * 2.2);
+      ctx.globalAlpha = clamp(alpha * 0.58, 0, 1);
+      ctx.drawImage(ASSETS.vortex, -98, -98, 196, 196);
+      ctx.restore();
+    }
+
+    // Flying blades from 4 corners / diagonal angles (t >= 0.45)
+    if (t >= 0.45 && ASSETS.blade.complete && ASSETS.blade.naturalWidth > 0) {
+      const flyT = clamp((t - 0.45) / 0.5, 0, 1);
+      const corners = [
+        [60, 60],
+        [W - 60, 60],
+        [60, H - 60],
+        [W - 60, H - 60]
+      ];
+      for (let i = 0; i < 12; i++) {
+        const c = corners[i % 4];
+        const delay = (i % 3) * 0.14;
+        const bt = clamp((flyT - delay) / 0.65, 0, 1);
+        if (bt <= 0) continue;
+        const targetX = 480 + ((i % 4) - 1.5) * 145;
+        const targetY = 310 + (Math.floor(i / 4) - 1) * 85;
+        const bx = lerp(c[0], targetX, bt);
+        const by = lerp(c[1], targetY, bt);
+        const ang = Math.atan2(targetY - c[1], targetX - c[0]);
+
+        ctx.save();
+        ctx.strokeStyle = `rgba(255, 70, 150, ${0.55 * (1 - bt * 0.4)})`;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(lerp(c[0], targetX, Math.max(0, bt - 0.25)), lerp(c[1], targetY, Math.max(0, bt - 0.25)));
+        ctx.lineTo(bx, by);
+        ctx.stroke();
+
+        ctx.translate(bx, by);
+        ctx.rotate(ang);
+        ctx.shadowColor = '#ff3898';
+        ctx.shadowBlur = 18;
+        ctx.drawImage(ASSETS.blade, -140, -37, 280, 74);
+        ctx.restore();
+      }
     }
   }
 
-  // Top cinematic band
-  const grad = ctx.createLinearGradient(0, 32, 0, 134);
+  // Top cinematic quote band + boss illust
+  const grad = ctx.createLinearGradient(0, 24, 0, 118);
   grad.addColorStop(0, 'rgba(20, 6, 34, 0)');
-  grad.addColorStop(0.25, 'rgba(38, 10, 62, 0.9)');
-  grad.addColorStop(0.75, 'rgba(85, 16, 70, 0.88)');
+  grad.addColorStop(0.25, 'rgba(38, 10, 62, 0.92)');
+  grad.addColorStop(0.75, 'rgba(85, 16, 70, 0.9)');
   grad.addColorStop(1, 'rgba(20, 6, 34, 0)');
   ctx.fillStyle = grad;
-  ctx.fillRect(0, 32, W, 102);
+  ctx.fillRect(0, 24, W, 94);
 
   if (ASSETS.bossIllust.complete && ASSETS.bossIllust.naturalWidth > 0) {
-    const slideX = lerp(W - 220, W - 265, t);
+    const slideX = lerp(W - 210, W - 260, t);
     ctx.save();
     ctx.beginPath();
-    ctx.rect(0, 34, W, 98);
+    ctx.rect(0, 26, W, 90);
     ctx.clip();
-    ctx.globalAlpha = clamp(alpha * 0.78, 0, 1);
-    ctx.drawImage(ASSETS.bossIllust, slideX, 18, 240, 140);
+    ctx.globalAlpha = clamp(alpha * 0.85, 0, 1);
+    ctx.drawImage(ASSETS.bossIllust, slideX, 12, 235, 135);
     ctx.restore();
   }
 
-  label(ctx, `패턴 개막 · ${cutIn.title}`, W / 2, 68, '#f5d89a', 22);
-  label(ctx, cutIn.quote, W / 2, 102, '#ffd4e8', 14);
+  label(ctx, `패턴 개막 · ${cutIn.title}`, W / 2, 58, '#f5d89a', 22);
+  label(ctx, cutIn.quote, W / 2, 92, '#ffd4e8', 14);
   ctx.restore();
 }
 
-export function renderFrame(ctx, state) {
+function drawAmbientParticles(ctx, animTime, isDeath) {
+  ctx.save();
+  for (const pt of ambientParticles) {
+    const px = ((pt.x + animTime * pt.vx) % W + W) % W;
+    const py = ((pt.y + animTime * pt.vy) % H + H) % H;
+    const a = 0.25 + 0.2 * Math.sin(animTime * 3 + pt.phase);
+    ctx.fillStyle = isDeath ? `rgba(255, 85, 155, ${a})` : `rgba(120, 230, 255, ${a})`;
+    ctx.beginPath();
+    ctx.arc(px, py, pt.size, 0, TAU);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function renderFrame(ctx, state) {
   const { stage, elapsed, animTime, screenShake, feedbackText, feedbackTimer, godMode } = state;
 
   ctx.save();
+  if (state.deathFlash > 0 || (!state.active && state.maxHits > 0 && state.totalHits >= state.maxHits)) {
+    ctx.filter = 'grayscale(85%) brightness(0.62)';
+  }
   if (screenShake > 0) {
     const mag = screenShake * 18;
     ctx.translate((Math.random() - 0.5) * mag, (Math.random() - 0.5) * mag);
   }
 
-  // Arena background
+  // Camera zoom-in during 3:35 eclipse intro
+  if (stage.introCutIn?.eclipse && elapsed < stage.introCutIn.duration) {
+    const t = elapsed / stage.introCutIn.duration;
+    const zoom = t < 0.7 ? lerp(1.0, 1.16, Math.sin((t / 0.7) * (Math.PI / 2))) : lerp(1.16, 1.0, (t - 0.7) / 0.3);
+    ctx.translate(480, 260);
+    ctx.scale(zoom, zoom);
+    ctx.translate(-480, -260);
+  }
+
   ctx.fillStyle = '#07030d';
   ctx.fillRect(0, 0, W, H);
   const bg = stage.worldState ? ASSETS.arenaDeath : ASSETS.arenaLife;
@@ -455,7 +709,8 @@ export function renderFrame(ctx, state) {
     ctx.drawImage(bg, 0, 0, W, H);
   }
 
-  // Playfield border
+  drawAmbientParticles(ctx, animTime, Boolean(stage.worldState));
+
   ctx.strokeStyle = stage.worldState ? 'rgba(255, 77, 132, 0.35)' : 'rgba(82, 232, 255, 0.3)';
   ctx.lineWidth = 2;
   ctx.strokeRect(BOUNDS.left, BOUNDS.top, BOUNDS.right - BOUNDS.left, BOUNDS.bottom - BOUNDS.top);
@@ -463,16 +718,16 @@ export function renderFrame(ctx, state) {
   const envState = getEnvelopeState(stage.envelope, elapsed, stage.chain?.cut);
   drawEnvelope(ctx, envState, animTime);
   drawAttacks(ctx, stage, elapsed, animTime);
-  drawChainAndFlower(ctx, stage, elapsed, animTime);
-
+  drawChainAndFlower(ctx, stage, elapsed, animTime, state.p);
   drawIntroCutIn(ctx, stage.introCutIn, elapsed, animTime);
+
   const bossPos = stage.counter && elapsed >= stage.counter.appearAt
     ? stage.counter.point
     : stage.introCutIn?.eclipse && elapsed < stage.introCutIn.duration
-      ? [480, 248]
+      ? [480, lerp(115, 248, 1 - Math.pow(1 - clamp(elapsed / (stage.introCutIn.duration * 0.35), 0, 1), 3))]
       : [480, 290];
   const counterReady = Boolean(stage.counter && elapsed >= stage.counter.readyAt && !stage.counter.hit);
-  drawBoss(ctx, bossPos[0], bossPos[1], counterReady, animTime);
+  drawBoss(ctx, bossPos[0], bossPos[1], counterReady, animTime, stage, elapsed);
 
   drawPlayer(ctx, state);
 
@@ -484,5 +739,19 @@ export function renderFrame(ctx, state) {
     label(ctx, feedbackText, W / 2, 74, '#ffe699', 18);
   }
 
+  if (state.deathFlash > 0) {
+    ctx.filter = 'none';
+    ctx.fillStyle = `rgba(12, 4, 18, ${0.48 * state.deathFlash})`;
+    ctx.fillRect(0, 0, W, H);
+    label(ctx, '사망 (HP 0)', W / 2, H / 2 - 22, '#ff6b94', 28);
+    label(ctx, '1구간부터 다시 시작합니다', W / 2, H / 2 + 12, '#f5d89a', 15);
+  }
+
   ctx.restore();
 }
+
+window.Yurisie.BOUNDS = BOUNDS;
+window.Yurisie.CENTER = CENTER;
+window.Yurisie.getEnvelopeState = getEnvelopeState;
+window.Yurisie.renderFrame = renderFrame;
+})();
