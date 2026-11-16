@@ -1,5 +1,6 @@
 // 역사의 끝 (11구간) — 타임라인 및 위치 싱크 정밀 데이터
-export const HISTORY_STAGES = [
+window.Yurisie = window.Yurisie || {};
+window.Yurisie.HISTORY_STAGES = [
   {
     stepTitle: '1. [역사 개막] 암흑 일식 기 모으기 연출(0~4s) → 사선 워닝 4연타 순차 폭발(①→②→③→④)',
     message: '3:35 기준 개막! 보스가 공중에서 암흑 일식 기를 모은 뒤(0~4s), 사선 워닝 ①→②→③→④가 순차적으로 4연속 폭발합니다. 교차 선 사이의 빈 공간(9시 방향)으로 피하세요!',
@@ -14,11 +15,11 @@ export const HISTORY_STAGES = [
     startPos: [480, 390],
     attacks: [
       { type: 'safeSpot', point: [228, 324], r: 80, warn: 4.0, fire: 8.8, label: '교차 사선 회피(9시 방향)' },
-      { type: 'slash', x: 480, y: 340, angle: -0.52, width: 56, warn: 4.0, fire: 5.6, seq: 1, label: '① 1차 대각선' },
-      { type: 'slash', x: 480, y: 340, angle: 0.52, width: 56, warn: 5.2, fire: 6.7, seq: 2, label: '② 2차 X교차 대각선' },
-      { type: 'slash', x: 480, y: 340, angle: -0.98, width: 54, warn: 6.2, fire: 7.7, seq: 3, label: '③ 3차 급각 사선' },
-      { type: 'slash', x: 480, y: 340, angle: 0.98, width: 54, warn: 7.1, fire: 8.6, seq: 4, label: '④ 4차 교차 사선' },
-      { type: 'slash', x: 480, y: 340, angle: Math.PI / 2, width: 52, warn: 7.4, fire: 8.6 }
+      { type: 'slash', x: 480, y: 340, angle: -0.52, width: 88, warn: 4.0, fire: 5.6, seq: 1, label: '① 1차 대각선' },
+      { type: 'slash', x: 480, y: 340, angle: 0.52, width: 88, warn: 5.2, fire: 6.7, seq: 2, label: '② 2차 X교차 대각선' },
+      { type: 'slash', x: 480, y: 340, angle: -0.98, width: 86, warn: 6.2, fire: 7.7, seq: 3, label: '③ 3차 급각 사선' },
+      { type: 'slash', x: 480, y: 340, angle: 0.98, width: 86, warn: 7.1, fire: 8.6, seq: 4, label: '④ 4차 교차 사선' },
+      { type: 'slash', x: 480, y: 340, angle: Math.PI / 2, width: 92, warn: 7.4, fire: 8.6 }
     ]
   },
   {
