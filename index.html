@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>역사의 끝 (유리지에) · 싱크 정밀 시뮬레이터</title>
-  <link rel="stylesheet" href="css/style.css?v=1.0.2">
+  <link rel="stylesheet" href="css/style.css?v=1.1.0">
 </head>
 <body>
   <main>
@@ -33,7 +33,7 @@
             </div>
           </div>
           <div class="hud-stats">
-            <span>피격 <strong id="hitCount">0</strong></span>
+            <span>피격 <strong id="hitCount">0 / 1</strong></span>
             <span>속도 <strong id="speedLabel">1.0x</strong></span>
           </div>
         </div>
@@ -70,6 +70,12 @@
             <button id="btnSpeedNorm" class="ctrl active">1.0x</button>
             <button id="btnSpeedFast" class="ctrl">1.25x</button>
             <button id="btnGodMode" class="ctrl">무적 연습: OFF</button>
+            <select id="maxHitsSelect" class="ctrl" title="사망 피격 횟수 선택">
+              <option value="1" selected>사망: 1대</option>
+              <option value="3">사망: 3대</option>
+              <option value="5">사망: 5대</option>
+              <option value="0">사망: 무제한</option>
+            </select>
             <button id="btnAudio" class="ctrl active">사운드: ON</button>
           </div>
         </div>
@@ -95,6 +101,9 @@
     </section>
   </main>
 
-  <script type="module" src="js/engine.js?v=1.0.2"></script></script>
+  <script defer src="js/audio.js?v=1.1.0"></script>
+  <script defer src="js/data/historyPattern.js?v=1.1.0"></script>
+  <script defer src="js/renderer.js?v=1.1.0"></script>
+  <script defer src="js/engine.js?v=1.1.0"></script>
 </body>
 </html>
