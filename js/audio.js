@@ -28,6 +28,16 @@ const VOICE_DATA = {
     speaker: '유리지에',
     line: '난 죽음을 넘어서리라! 나는 운명을 극복하리라! 딛고 일어선다!'
   },
+  largo_1: {
+    file: 'assets/audio/voice_largo_1.mp3',
+    speaker: '해방된 라르고',
+    line: '지금이다! 그 틈을 베어라!'
+  },
+  largo_2: {
+    file: 'assets/audio/voice_largo_2.mp3',
+    speaker: '해방된 라르고',
+    line: '네놈의 역사는 여기서 끝난다, 유리지에!'
+  },
   defeat: {
     file: 'assets/audio/voice_defeat.mp3',
     speaker: '유리지에',
@@ -38,20 +48,31 @@ const VOICE_DATA = {
 class SyncAudioEngine {
   constructor() {
     this.enabled = true;
+    this.masterVolume = 0.85;
     this.speedScale = 1.0;
     this.ctx = null;
 
     this.bgm = new Audio('assets/audio/bgm_yurisie.mp3');
     this.bgm.loop = true;
-    this.bgm.volume = 0.34;
+    this.bgm.volume = 0.34 * this.masterVolume;
 
     this.currentVoice = null;
+    this.currentVoiceKey = null;
     this.currentVoiceMeta = null;
     this.voiceSubEl = null;
   }
 
   attachSubtitleEl(el) {
     this.voiceSubEl = el;
+  }
+
+  setVolume(vol) {
+    this.masterVolume = Math.max(0, Math.min(1, vol));
+    const voicePlaying = this.currentVoice && !this.currentVoice.ended && !this.currentVoice.paused;
+    this.bgm.volume = (voicePlaying ? 0.14 : 0.34) * this.masterVolume;
+    if (this.currentVoice) {
+      this.currentVoice.volume = 0.92 * this.masterVolume;
+    }
   }
 
   setEnabled(flag) {
@@ -83,7 +104,7 @@ class SyncAudioEngine {
     }
 
     const voicePlaying = this.currentVoice && !this.currentVoice.ended && this.currentVoice.currentTime > 0;
-    this.bgm.volume = voicePlaying && !this.currentVoice.paused ? 0.14 : 0.34;
+    this.bgm.volume = (voicePlaying && !this.currentVoice.paused ? 0.14 : 0.34) * this.masterVolume;
     if (this.bgm.paused) {
       this.bgm.play().catch(() => {});
     }
@@ -98,6 +119,7 @@ class SyncAudioEngine {
       this.currentVoice.currentTime = 0;
       this.currentVoice = null;
     }
+    this.currentVoiceKey = null;
     this.currentVoiceMeta = null;
     this.updateSubtitle('');
   }
@@ -119,19 +141,19 @@ class SyncAudioEngine {
 
     this.stopVoice();
     const audio = new Audio(info.file);
-    audio.volume = 0.92;
+    audio.volume = 0.92 * this.masterVolume;
     audio.playbackRate = Math.max(0.75, Math.min(1.3, this.speedScale));
     this.currentVoice = audio;
     this.currentVoiceKey = key;
     this.currentVoiceMeta = info;
     this.updateSubtitle(`[${info.speaker}] "${info.line}"`);
-    this.bgm.volume = 0.14;
+    this.bgm.volume = 0.14 * this.masterVolume;
 
     audio.addEventListener('ended', () => {
       if (this.currentVoice === audio) {
         this.currentVoice = null;
         this.currentVoiceKey = null;
-        this.bgm.volume = 0.34;
+        this.bgm.volume = 0.34 * this.masterVolume;
         this.updateSubtitle('');
       }
     });
@@ -176,10 +198,11 @@ class SyncAudioEngine {
   }
 
   playTone(type) {
-    if (!this.enabled) return;
+    if (!this.enabled || this.masterVolume <= 0.01) return;
     try {
       this.ensureCtx();
       const now = this.ctx.currentTime;
+      const v = this.masterVolume;
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.connect(gain);
@@ -189,71 +212,92 @@ class SyncAudioEngine {
         case 'tick':
           osc.type = 'triangle';
           osc.frequency.setValueAtTime(880, now);
-          osc.frequency.exponentialRampToValueAtTime(1120, now + 0.045);
-          gain.gain.setValueAtTime(0.06, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+          osc.frequency.exponentialRampToValueAtTime(1180, now + 0.045);
+          gain.gain.setValueAtTime(0.065 * v, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.055);
           osc.start(now);
-          osc.stop(now + 0.055);
+          osc.stop(now + 0.06);
           break;
         case 'slash':
           osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(340, now);
-          osc.frequency.exponentialRampToValueAtTime(95, now + 0.13);
-          gain.gain.setValueAtTime(0.11, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+          osc.frequency.setValueAtTime(360, now);
+          osc.frequency.exponentialRampToValueAtTime(85, now + 0.14);
+          gain.gain.setValueAtTime(0.12 * v, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
           osc.start(now);
-          osc.stop(now + 0.15);
+          osc.stop(now + 0.16);
           break;
         case 'quake':
           osc.type = 'sine';
-          osc.frequency.setValueAtTime(115, now);
-          osc.frequency.exponentialRampToValueAtTime(42, now + 0.24);
-          gain.gain.setValueAtTime(0.22, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+          osc.frequency.setValueAtTime(125, now);
+          osc.frequency.exponentialRampToValueAtTime(38, now + 0.28);
+          gain.gain.setValueAtTime(0.24 * v, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
           osc.start(now);
-          osc.stop(now + 0.26);
+          osc.stop(now + 0.31);
           break;
         case 'chain':
           osc.type = 'triangle';
-          osc.frequency.setValueAtTime(520, now);
-          osc.frequency.exponentialRampToValueAtTime(1240, now + 0.16);
-          gain.gain.setValueAtTime(0.14, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
-          osc.start(now);
-          osc.stop(now + 0.19);
-          break;
-        case 'flower':
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(660, now);
-          osc.frequency.exponentialRampToValueAtTime(990, now + 0.16);
-          gain.gain.setValueAtTime(0.14, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
-          osc.start(now);
-          osc.stop(now + 0.19);
-          break;
-        case 'counter':
-          osc.type = 'square';
-          osc.frequency.setValueAtTime(420, now);
-          osc.frequency.exponentialRampToValueAtTime(1480, now + 0.18);
-          gain.gain.setValueAtTime(0.16, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
-          osc.start(now);
-          osc.stop(now + 0.23);
-          break;
-        case 'hit':
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(170, now);
-          osc.frequency.exponentialRampToValueAtTime(55, now + 0.18);
-          gain.gain.setValueAtTime(0.18, now);
+          osc.frequency.setValueAtTime(540, now);
+          osc.frequency.exponentialRampToValueAtTime(1380, now + 0.18);
+          gain.gain.setValueAtTime(0.16 * v, now);
           gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
           osc.start(now);
           osc.stop(now + 0.21);
           break;
+        case 'flower':
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(660, now);
+          osc.frequency.exponentialRampToValueAtTime(1040, now + 0.18);
+          gain.gain.setValueAtTime(0.15 * v, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+          osc.start(now);
+          osc.stop(now + 0.21);
+          break;
+        case 'worldShift': {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(220, now);
+          osc.frequency.exponentialRampToValueAtTime(520, now + 0.24);
+          gain.gain.setValueAtTime(0.16 * v, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+          osc.start(now);
+          osc.stop(now + 0.34);
+          break;
+        }
+        case 'counterWarn': {
+          // Sharp DNF golden glint "DING!"
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(1560, now);
+          osc.frequency.exponentialRampToValueAtTime(2093, now + 0.08);
+          gain.gain.setValueAtTime(0.18 * v, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+          osc.start(now);
+          osc.stop(now + 0.34);
+          break;
+        }
+        case 'counter':
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(420, now);
+          osc.frequency.exponentialRampToValueAtTime(1640, now + 0.22);
+          gain.gain.setValueAtTime(0.18 * v, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+          osc.start(now);
+          osc.stop(now + 0.3);
+          break;
+        case 'hit':
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(180, now);
+          osc.frequency.exponentialRampToValueAtTime(50, now + 0.2);
+          gain.gain.setValueAtTime(0.2 * v, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+          osc.start(now);
+          osc.stop(now + 0.23);
+          break;
         case 'dash':
           osc.type = 'sine';
           osc.frequency.setValueAtTime(280, now);
-          osc.frequency.exponentialRampToValueAtTime(420, now + 0.06);
-          gain.gain.setValueAtTime(0.06, now);
+          osc.frequency.exponentialRampToValueAtTime(440, now + 0.06);
+          gain.gain.setValueAtTime(0.06 * v, now);
           gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
           osc.start(now);
           osc.stop(now + 0.08);
@@ -262,7 +306,7 @@ class SyncAudioEngine {
           osc.type = 'sine';
           osc.frequency.setValueAtTime(240, now);
           osc.frequency.exponentialRampToValueAtTime(520, now + 0.09);
-          gain.gain.setValueAtTime(0.07, now);
+          gain.gain.setValueAtTime(0.07 * v, now);
           gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
           osc.start(now);
           osc.stop(now + 0.11);

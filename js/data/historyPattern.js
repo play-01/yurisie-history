@@ -1,220 +1,772 @@
-// 역사의 끝 (11구간) — 타임라인 및 위치 싱크 정밀 데이터
+// ============================================================================
+// 각인된 악몽 2페이즈 - 유리지에 : "역사의 끝 (역사 칼날 패턴)"
+// 레퍼런스 영상 1: https://youtu.be/zNIaDY_8Ksc (남런처 노피격 파훼 영상, 1158x720 60fps)
+// 레퍼런스 영상 2: https://youtu.be/qIGrxCMfhok?t=1193 (공략 & 파훼 예시 영상, 19:53~21:57)
+// 두 영상 교차 검증 1:1 프레임·스케일·속도감 정밀 데이터
+// ============================================================================
+(() => {
+'use strict';
 window.Yurisie = window.Yurisie || {};
-window.Yurisie.HISTORY_STAGES = [
+
+const HISTORY_META = {
+  bossName: 'Lv145 보스-죽음을 딛고 선 자',
+  patternName: '역사의 끝 (역사 칼날 패턴)',
+  quoteIntro1: '이제, 또렷이 보이는가',
+  quoteIntro2: '네 역사의 끝을 목도하라',
+  videoUrl: 'https://youtu.be/zNIaDY_8Ksc',
+  guideUrl: 'https://www.youtube.com/watch?v=qIGrxCMfhok&t=1193s',
+  totalDuration: 60.0
+};
+
+const HISTORY_STAGES = [
+  // --------------------------------------------------------------------------
+  // 1구간: 고속 인트로(0~3.0s) + 초대형 4연 대각 붉은 장판 + 8방향(*) 검은 검선 + 파멸 점프/백스텝(6.05s)
+  // (10시 삼각 포켓 [zNIaDY_8Ksc] 및 6시~7시 삼각 포켓 [qIGrxCMfhok] 양쪽 모두 완벽 지원!)
+  // --------------------------------------------------------------------------
   {
-    stepTitle: '1. [역사 개막] 암흑 일식 기 모으기 연출(0~4s) → 사선 워닝 4연타 순차 폭발(①→②→③→④)',
-    message: '3:35 기준 개막! 보스가 공중에서 암흑 일식 기를 모은 뒤(0~4s), 사선 워닝 ①→②→③→④가 순차적으로 4연속 폭발합니다. 교차 선 사이의 빈 공간(9시 방향)으로 피하세요!',
-    duration: 9.6,
+    id: 1,
+    stepTitle: '1구간 · 초대형 4연 대각 붉은 장판 + 8방향(*) 검은 검선 + [파멸] 점프/백스텝',
+    duration: 7.15,
+    videoRange: '00:03.3 ~ 00:10.4',
     worldState: false,
-    introCutIn: {
-      title: '역사의 끝',
-      quote: '"이제, 또렷이 보이는가. 네 역사의 끝을 목도하라"',
-      duration: 4.0,
-      eclipse: true
+    bossMotion: 'spreadClaws',
+    bossTimeline: [
+      { t: 0.00, motion: 'spreadClaws', burst: true },
+      { t: 3.10, motion: 'spreadClaws', burst: true },
+      { t: 4.70, motion: 'spreadClaws', burst: true },
+      { t: 6.05, motion: 'spreadClaws', burst: true }
+    ],
+    bossPos: [579, 228],
+    startPos: [585, 505],
+    guideWaypoints: [
+      [585, 505],
+      [465, 412] // 10시 안전 포켓 (또는 6시~7시 [505, 575] 포켓도 동일하게 안전!)
+    ],
+    safeSpot: [465, 412],
+    altSafeSpot: [505, 575],
+    actionCue: '10시(또는 6시) 안전 포켓으로 이동 후 [파멸] 캐스팅 완료(6.05초) 시 점프(C) 또는 백스텝(↓+C)!',
+    castBar: {
+      title: '파멸',
+      startTime: 3.20,
+      endTime: 6.05,
+      color: '#d92b4b',
+      icon: 'disaster'
     },
-    startPos: [480, 390],
+    introCutscene: {
+      endTime: 3.10
+    },
+    ambientSwords: false,
+    envelope: null,
     attacks: [
-      { type: 'safeSpot', point: [228, 324], r: 80, warn: 4.0, fire: 8.8, label: '교차 사선 회피(9시 방향)' },
-      { type: 'slash', x: 480, y: 340, angle: -0.52, width: 88, warn: 4.0, fire: 5.6, seq: 1, label: '① 1차 대각선' },
-      { type: 'slash', x: 480, y: 340, angle: 0.52, width: 88, warn: 5.2, fire: 6.7, seq: 2, label: '② 2차 X교차 대각선' },
-      { type: 'slash', x: 480, y: 340, angle: -0.98, width: 86, warn: 6.2, fire: 7.7, seq: 3, label: '③ 3차 급각 사선' },
-      { type: 'slash', x: 480, y: 340, angle: 0.98, width: 86, warn: 7.1, fire: 8.6, seq: 4, label: '④ 4차 교차 사선' },
-      { type: 'slash', x: 480, y: 340, angle: Math.PI / 2, width: 92, warn: 7.4, fire: 8.6 }
-    ]
-  },
-  {
-    stepTitle: '2. [역사 개막] 9시→6시 이동 + 양끝 세로 면 공격 & 6시 백스텝(↓+C)/점프(C)',
-    message: '9시에서 6시로 이동! 양끝 면 공격과 상단 장판 후 6시 땅울림+선 공격을 백스텝(↓+C) 또는 점프(C)로 피하세요.',
-    duration: 4.6,
-    worldState: false,
-    startPos: [228, 324],
-    attacks: [
-      { type: 'safeSpot', point: [480, 455], r: 84, warn: 0.1, fire: 2.1, label: '6시 이동 후 백스텝(↓+C)!' },
-      { type: 'rect', x1: 70, y1: 195, x2: 890, y2: 335, warn: 0.2, fire: 2.1, label: '상단 광역 장판' },
-      { type: 'pillar', x1: 70, x2: 220, y1: 195, y2: 495, warn: 0.3, fire: 2.1, seq: 1, label: '① 좌측 세로 면 공격' },
-      { type: 'pillar', x1: 740, x2: 890, y1: 195, y2: 495, warn: 0.6, fire: 2.4, seq: 2, label: '② 우측 세로 면 공격' },
-      { type: 'slash', x: 640, y: 260, angle: -0.62, width: 145, warn: 2.1, fire: 3.9, label: '1시 광역 선 공격' },
-      { type: 'quake', warn: 2.2, fire: 3.9, label: '6시 백스텝(↓+C) 또는 점프(C)!' }
-    ]
-  },
-  {
-    stepTitle: '3. [역사 초반] 연속 세로 면 공격(①~⑤) 회피 → 좌상단 사슬 절단 & 푸른 꽃',
-    message: '달려서 연속 세로 면 공격(①~⑤)과 외곽 링 장판을 피한 뒤, 좌상단 사슬을 끊고 [푸른 꽃]을 획득하세요.',
-    duration: 6.2,
-    worldState: false,
-    startPos: [480, 455],
-    envelope: { type: 'donut', from: [480, 340], to: [480, 340], r: 225, shrinkTo: 160, startT: 0, endT: 3.6, widenOnCut: true },
-    attacks: [
-      { type: 'pillar', x1: 70, x2: 225, y1: 195, y2: 495, warn: 0.1, fire: 1.4, seq: 1, label: '① 세로 면 공격' },
-      { type: 'pillar', x1: 735, x2: 890, y1: 195, y2: 495, warn: 0.4, fire: 1.7, seq: 2, label: '② 세로 면 공격' },
-      { type: 'pillar', x1: 575, x2: 735, y1: 195, y2: 495, warn: 0.8, fire: 2.2, seq: 3, label: '③ 세로 면 공격' },
-      { type: 'pillar', x1: 420, x2: 575, y1: 195, y2: 495, warn: 1.2, fire: 2.7, seq: 4, label: '④ 중앙 면 공격' },
-      { type: 'ring', x: 480, y: 340, innerR: 155, outerR: 480, warn: 1.5, fire: 3.2, label: '외곽 링 장판' },
-      { type: 'pillar', x1: 225, x2: 390, y1: 195, y2: 495, warn: 2.6, fire: 4.3, seq: 5, label: '⑤ 좌측 후속 면 공격' }
+      // 원작 seg1_00 (7.0s~8.6s) 1:1 수학적 고증:
+      // 중심 (579, 470)을 기준으로 좌하단(\)+우상단(\)이 빈틈없이 맞닿고, 우하단(/)+좌상단(/)이 빈틈없이 맞닿는 폭 360px 장판 4개!
+      // 4개가 모두 깔리면 중앙 안전구역 없이 바닥 전체(100%)가 붉게 덮이며, 1차->2차->3차 순차 폭발로 열릴 때 그 자리로 들어가야 함!
+      {
+        kind: 'red_band',
+        point: [499, 631],
+        angle: 0.46, // +26.4 deg (\) 좌하단 반평면
+        width: 360,
+        length: 2600,
+        spawnTime: 3.40,
+        fireTime: 5.20,
+        label: '1차 좌하단 초대형 붉은 장판'
+      },
+      {
+        kind: 'red_band',
+        point: [659, 631],
+        angle: -0.46, // -26.4 deg (/) 우하단 반평면
+        width: 360,
+        length: 2600,
+        spawnTime: 3.75,
+        fireTime: 5.50,
+        label: '2차 우하단 초대형 붉은 장판'
+      },
+      {
+        kind: 'red_band',
+        point: [499, 309],
+        angle: -0.46, // -26.4 deg (/) 좌상단 반평면 (2차 장판과 경계선이 정확히 맞닿아 중앙 빈틈 0px!)
+        width: 360,
+        length: 2600,
+        spawnTime: 4.08,
+        fireTime: 5.80,
+        label: '3차 좌상단 초대형 붉은 장판'
+      },
+      {
+        kind: 'red_band',
+        point: [659, 309],
+        angle: +0.46, // +26.4 deg (\) 우상단 반평면 (1차 장판과 경계선이 정확히 맞닿아 중앙 빈틈 0px!)
+        width: 360,
+        length: 2600,
+        spawnTime: 4.38,
+        fireTime: 6.22,
+        label: '4차 우상단 초대형 붉은 장판'
+      },
+
+      // 교차 중심 (675, 490), 두께 76px의 8방향(*) 검은 코어 검선 4개 (고속 순차 전개 & 연속 참격 폭발)
+      {
+        kind: 'black_slash',
+        point: [675, 490],
+        angle: 0,
+        width: 76,
+        length: 2500,
+        spawnTime: 4.75,
+        fireTime: 6.45,
+        label: '가로 검은 코어 검선'
+      },
+      {
+        kind: 'black_slash',
+        point: [675, 490],
+        angle: -Math.PI / 4,
+        width: 76,
+        length: 2500,
+        spawnTime: 4.92,
+        fireTime: 6.65,
+        label: '우상향(/) 검은 코어 검선'
+      },
+      {
+        kind: 'black_slash',
+        point: [675, 490],
+        angle: Math.PI / 2,
+        width: 76,
+        length: 2500,
+        spawnTime: 5.08,
+        fireTime: 6.85,
+        label: '세로 검은 코어 검선'
+      },
+      {
+        kind: 'black_slash',
+        point: [675, 490],
+        angle: Math.PI / 4,
+        width: 76,
+        length: 2500,
+        spawnTime: 5.12,
+        fireTime: 7.02,
+        label: '우하향(\\) 검은 코어 검선'
+      },
+
+      // 6.05초(영상 9.45초) [파멸] 대지 파쇄 점프 판정
+      {
+        kind: 'ground_quake',
+        point: [579, 465],
+        radius: 1600,
+        spawnTime: 3.20,
+        fireTime: 6.05,
+        jumpRequired: true,
+        label: '파멸 땅울림 (점프 C / 백스텝 ↓+C)'
+      }
     ],
+    message:
+      '화면 전체를 덮는 초대형 4연 대각 붉은 장판과 8방향(*) 검은 검선이 빠르게 전개됩니다. 10시(x=465, y=412) 또는 6시(x=505, y=575) 안전 포켓으로 이동해 [파멸] 캐스팅 완료 시 점프(C) 또는 백스텝(↓+C)으로 회피하세요!'
+  },
+
+  // --------------------------------------------------------------------------
+  // 2구간 (10.45s ~ 14.80s): 좌->우 연쇄 추격 보라 기둥 + 36검 포위 고리 고속 진입 + 1차 사슬 절단 + ◇ 마름모 보라 빔
+  // --------------------------------------------------------------------------
+  {
+    id: 2,
+    stepTitle: '2구간 · 연쇄 보라 기둥 질주 회피 & 36검 포위망 진입 + 1차 좌측 사슬 절단 + [◇ 마름모] 빔',
+    duration: 4.35,
+    videoRange: '00:10.4 ~ 00:14.8',
+    worldState: false,
+    bossMotion: 'spreadClaws',
+    bossTimeline: [
+      { t: 0.0, motion: 'spreadClaws', burst: true },
+      { t: 0.75, motion: 'spreadClaws', burst: true },
+      { t: 2.15, motion: 'spreadClaws', burst: true },
+      { t: 4.00, motion: 'spreadClaws', burst: true }
+    ],
+    bossPos: [579, 228],
+    startPos: [465, 412],
+    guideWaypoints: [
+      [465, 412],
+      [605, 465],
+      [579, 465]
+    ],
+    safeSpot: [605, 465],
+    actionCue: '달려서 좌측 연쇄 보라 기둥을 피하고 세로 검은 검선(x=525) 오른쪽(x=605)에서 1차 사슬 절단!',
+    ambientSwords: true,
+    envelope: {
+      kind: 'ring36',
+      from: [280, 465],
+      to: [579, 465],
+      moveEndTime: 1.35,
+      radius: 235
+    },
+    grayCircleZone: {
+      center: [579, 465],
+      radius: 215,
+      startTime: 2.15,
+      endTime: 4.35
+    },
     chain: {
-      anchor: [315, 425],
-      safeTarget: [315, 280],
-      slash: { axis: 'y', at: 355, width: 50 },
-      warn: 1.4,
-      fire: 3.5,
-      flower: [375, 265],
-      flowerColor: 'blue'
-    }
-  },
-  {
-    stepTitle: '4. [죽음의 세계] 중앙 대기(외곽 보랏빛 폭발) → 우측 사슬 절단 → 중앙 복귀',
-    message: '중앙 원형 장판에서 외곽 보랏빛 폭발을 피한 뒤, 오른쪽으로 나가 사슬을 끊고 다시 중앙으로 복귀하세요.',
-    duration: 5.4,
-    worldState: true,
-    startPos: [375, 265],
-    envelope: { type: 'donut', from: [480, 340], to: [480, 340], r: 205, widenOnCut: true },
+      anchor: [80, 465],
+      spawnTime: 0.15,
+      cutTime: 2.15
+    },
     attacks: [
-      { type: 'purpleVoid', x: 480, y: 350, r: 128, warn: 0.2, fire: 1.8, label: '① 중앙 대기 (외곽 보랏빛 폭발!)' },
-      { type: 'floorPad', x: 480, y: 350, r: 128, warn: 1.9, fire: 3.7, label: '② 중앙 원형 장판 폭발 (우측으로!)' },
-      { type: 'purpleVoid', x: 480, y: 350, r: 135, warn: 3.8, fire: 5.1, label: '③ 다시 중앙으로 복귀!' }
+      // 좌측에서 중앙으로 도미노처럼 빠르게 좁혀 들어오는 수직 보라 기둥 ("바로 달려서 면공격 피하고")
+      { kind: 'purple_pillar', x: 95, width: 175, spawnTime: 0.00, fireTime: 0.85, label: '1열 추격 보라 기둥' },
+      { kind: 'purple_pillar', x: 275, width: 175, spawnTime: 0.16, fireTime: 1.05, label: '2열 추격 보라 기둥' },
+      { kind: 'purple_pillar', x: 900, width: 175, spawnTime: 0.00, fireTime: 0.95, label: '우내측 보라 기둥' },
+      { kind: 'purple_pillar', x: 1080, width: 175, spawnTime: 0.16, fireTime: 1.10, label: '우외곽 보라 기둥' },
+
+      {
+        kind: 'black_slash',
+        point: [525, 465],
+        angle: Math.PI / 2,
+        width: 72,
+        length: 1600,
+        spawnTime: 0.70,
+        fireTime: 2.15,
+        cutsChain: true,
+        label: '1차 사슬 절단 수직 검선'
+      },
+
+      { kind: 'purple_beam', point: [420, 355], angle: -0.62, width: 155, length: 1800, spawnTime: 2.75, fireTime: 3.95, label: '◇ 마름모 좌상단 보라 빔' },
+      { kind: 'purple_beam', point: [738, 355], angle: 0.62, width: 155, length: 1800, spawnTime: 2.75, fireTime: 3.95, label: '◇ 마름모 우상단 보라 빔' },
+      { kind: 'purple_beam', point: [420, 575], angle: 0.62, width: 155, length: 1800, spawnTime: 2.75, fireTime: 3.95, label: '◇ 마름모 좌하단 보라 빔' },
+      { kind: 'purple_beam', point: [738, 575], angle: -0.62, width: 155, length: 1800, spawnTime: 2.75, fireTime: 3.95, label: '◇ 마름모 우하단 보라 빔' }
     ],
-    chain: {
-      anchor: [480, 350],
-      safeTarget: [645, 350],
-      slash: { axis: 'x', at: 560, width: 50 },
-      warn: 1.9,
-      fire: 3.7
-    }
+    message:
+      '바로 오른쪽으로 달려서 좌측 연쇄 보라 기둥을 피하고, 세로 검은 검선(x=525)의 오른쪽(x=605)에 서서 1차 좌측 사슬을 끊은 뒤 중앙 원 안에서 ◇ 마름모 보라 빔을 피하세요!'
   },
+
+  // --------------------------------------------------------------------------
+  // 3구간 (14.80s ~ 16.80s): 좌측 사선 보라 격자 + 2차 우측 사슬 절단
+  // --------------------------------------------------------------------------
   {
-    stepTitle: '5. [죽음의 세계] 3시 반시계 6연속 선 공격 + 땅울림 점프(C) & 붉은 꽃 습득',
-    message: '3시에서 반시계로 돌며 6연속 선 공격을 피하고, 붉은 땅울림을 C 점프로 넘긴 뒤 [붉은 꽃]을 먹고 오른쪽으로 이동하세요.',
-    duration: 6.5,
-    worldState: true,
-    startPos: [560, 340],
-    envelope: { type: 'donut', from: [480, 340], to: [480, 340], r: 195 },
-    attacks: [
-      ...Array.from({ length: 6 }, (_, i) => ({
-        type: 'slash',
-        x: 480,
-        y: 340,
-        angle: -0.78 - i * (Math.PI / 6),
-        width: 44,
-        warn: 0.2 + i * 0.34,
-        fire: 1.35 + i * 0.34
-      })),
-      { type: 'floorPad', x: 480, y: 340, r: 185, warn: 2.1, fire: 3.9, label: '바닥 전체 붉은 파동 장판' },
-      { type: 'quake', warn: 2.3, fire: 3.9, label: '중앙 아래에서 C 점프!' },
-      { type: 'purpleVoid', x: 480, y: 365, r: 125, warn: 2.5, fire: 4.1, label: '외곽 보랏빛 장판 폭발' }
-    ],
-    standaloneFlower: { point: [480, 370], appearAt: 4.0, color: 'red' }
-  },
-  {
-    stepTitle: '6. [생명의 세계] 위로 이동하며 연속 세로 면 공격(①~④) 회피 & 우측 장판 진입',
-    message: '오른쪽 위로 올라가며 순서대로 떨어지는 세로 면 공격(①→④)과 중앙 장판을 피해 우측 아래 안전 장판으로 이동하세요.',
-    duration: 5.2,
+    id: 3,
+    stepTitle: '3구간 · 좌측 사선 검기 고속 폭발 후 좌측 이동으로 2차 우측 사슬 절단',
+    duration: 2.00,
+    videoRange: '00:14.8 ~ 00:16.8',
     worldState: false,
-    startPos: [560, 360],
-    envelope: { type: 'donut', from: [610, 330], to: [650, 315], r: 180, startT: 0, endT: 3.0 },
-    attacks: [
-      { type: 'pillar', x1: 90, x2: 230, y1: 195, y2: 495, warn: 0.1, fire: 1.4, seq: 1, label: '① 세로 면 공격' },
-      { type: 'pillar', x1: 230, x2: 370, y1: 195, y2: 495, warn: 0.4, fire: 1.8, seq: 2, label: '② 세로 면 공격' },
-      { type: 'pillar', x1: 370, x2: 520, y1: 195, y2: 495, warn: 0.8, fire: 2.2, seq: 3, label: '③ 세로 면 공격' },
-      { type: 'floorPad', x: 430, y: 360, r: 110, warn: 0.6, fire: 2.2, label: '중앙 바닥 장판' },
-      { type: 'pillar', x1: 520, x2: 650, y1: 195, y2: 495, warn: 1.3, fire: 2.7, seq: 4, label: '④ 우중간 면 공격' },
-      { type: 'safeSpot', point: [715, 395], r: 84, warn: 2.0, fire: 4.4, label: '우측 아래 장판으로 이동!' }
-    ]
-  },
-  {
-    stepTitle: '7. [생명의 세계] 좌하단 질주(면 공격 ①~⑥ 회피) → 우측 사슬 절단 & 푸른 꽃',
-    message: '우측부터 떨어지는 6연속 면 공격(①~⑥)을 피해 왼쪽 아래로 달리다가, 끝나면 오른쪽으로 이동해 사슬을 끊고 [푸른 꽃]을 획득하세요.',
-    duration: 6.6,
-    worldState: false,
-    startPos: [715, 395],
-    envelope: { type: 'donut', from: [715, 395], to: [280, 395], r: 180, startT: 0, endT: 2.8, widenOnCut: true },
-    attacks: [
-      { type: 'pillar', x1: 750, x2: 890, y1: 195, y2: 495, warn: 0.1, fire: 1.3, seq: 1, label: '① 우측 끝 면 공격' },
-      { type: 'pillar', x1: 620, x2: 750, y1: 195, y2: 495, warn: 0.4, fire: 1.6, seq: 2, label: '② 우중간 면 공격' },
-      { type: 'floorPad', x: 640, y: 360, r: 95, warn: 0.3, fire: 1.7, label: '우측 바닥 장판' },
-      { type: 'pillar', x1: 490, x2: 620, y1: 195, y2: 495, warn: 0.8, fire: 2.0, seq: 3, label: '③ 중앙 면 공격' },
-      { type: 'pillar', x1: 360, x2: 490, y1: 195, y2: 495, warn: 1.2, fire: 2.4, seq: 4, label: '④ 좌중간 면 공격' },
-      { type: 'floorPad', x: 450, y: 390, r: 95, warn: 1.1, fire: 2.5, label: '중앙 바닥 장판' },
-      { type: 'pillar', x1: 70, x2: 220, y1: 195, y2: 495, warn: 1.8, fire: 3.2, seq: 5, label: '⑤ 좌측 끝 면 공격 (오른쪽으로!)' },
-      { type: 'pillar', x1: 220, x2: 350, y1: 195, y2: 495, warn: 2.2, fire: 3.6, seq: 6, label: '⑥ 좌측 면 공격 (오른쪽으로!)' }
+    bossMotion: 'spreadClaws',
+    bossTimeline: [
+      { t: 0.0, motion: 'spreadClaws', burst: true },
+      { t: 0.80, motion: 'spreadClaws', burst: true },
+      { t: 1.80, motion: 'spreadClaws', burst: true }
     ],
+    bossPos: [579, 228],
+    startPos: [605, 465],
+    guideWaypoints: [
+      [605, 465],
+      [512, 465]
+    ],
+    safeSpot: [512, 465],
+    actionCue: '중앙에서 대기하다 0.8초 좌측 사선 검기 폭발 직후 왼쪽(x=512)으로 이동해 우측 사슬 절단!',
+    ambientSwords: true,
+    envelope: {
+      kind: 'ring36',
+      from: [579, 465],
+      to: [579, 465],
+      moveEndTime: 0.1,
+      radius: 235
+    },
+    grayCircleZone: {
+      center: [579, 465],
+      radius: 215,
+      startTime: 0.0,
+      endTime: 2.0
+    },
     chain: {
-      anchor: [250, 395],
-      safeTarget: [440, 395],
-      slash: { axis: 'x', at: 345, width: 52 },
-      warn: 2.1,
-      fire: 4.2,
-      flower: [485, 395],
-      flowerColor: 'blue'
-    }
-  },
-  {
-    stepTitle: '8. [죽음의 세계] 꽃 획득 후 안전지대 대기 → 거대 붉은 바닥 장판 회피',
-    message: '보랏빛 폭발을 안전지대 안에서 피한 뒤, 좌·중앙에 깔리는 거대 붉은 장판 밖(아래쪽 안전지대)으로 빠지세요.',
-    duration: 5.0,
-    worldState: true,
-    startPos: [485, 395],
-    envelope: { type: 'donut', from: [485, 395], to: [485, 395], r: 195 },
+      anchor: [1080, 465],
+      spawnTime: 0.05,
+      cutTime: 1.80
+    },
     attacks: [
-      { type: 'purpleVoid', x: 520, y: 395, r: 130, warn: 0.2, fire: 1.9, label: '① 안전지대 장판 이동!' },
-      { type: 'floorPad', x: 370, y: 325, r: 175, warn: 2.0, fire: 4.2, label: '② 거대 붉은 바닥 장판 (아래로!)' },
-      { type: 'safeSpot', point: [545, 445], r: 82, warn: 2.0, fire: 4.2, label: '아래 안전지대 이동' }
-    ]
-  },
-  {
-    stepTitle: '9. [죽음의 세계] 11시 대각선 이동 사슬 절단 + 우측 장판 회피 & 붉은 꽃',
-    message: '왼쪽 위(11시)로 이동해 사슬을 끊고, 우측 장판과 세로 면 공격을 피해 [붉은 꽃]을 획득하세요.',
-    duration: 5.4,
-    worldState: true,
-    startPos: [545, 445],
-    envelope: { type: 'donut', from: [460, 320], to: [460, 320], r: 185, widenOnCut: true },
-    attacks: [
-      { type: 'floorPad', x: 620, y: 370, r: 110, warn: 0.3, fire: 2.4, label: '우하단 바닥 장판' },
-      { type: 'pillar', x1: 600, x2: 780, y1: 195, y2: 495, warn: 0.5, fire: 2.5, seq: 1, label: '우측 세로 면 공격' }
+      { kind: 'purple_beam', point: [365, 410], angle: -0.78, width: 100, length: 1600, spawnTime: 0.0, fireTime: 0.80, label: '좌측 사선 보라 검기' },
+      { kind: 'purple_beam', point: [455, 445], angle: -0.78, width: 100, length: 1600, spawnTime: 0.0, fireTime: 0.80, label: '좌측 사선 보라 검기' },
+      { kind: 'purple_beam', point: [275, 375], angle: -0.78, width: 100, length: 1600, spawnTime: 0.0, fireTime: 0.80, label: '좌측 사선 보라 검기' },
+
+      {
+        kind: 'black_slash',
+        point: [579, 465],
+        angle: Math.PI / 2,
+        width: 72,
+        length: 1600,
+        spawnTime: 0.30,
+        fireTime: 1.80,
+        cutsChain: true,
+        label: '2차 사슬 절단 중앙 수직 검선'
+      }
     ],
-    chain: {
-      anchor: [470, 395],
-      safeTarget: [350, 245],
-      slash: { axis: 'y', at: 325, width: 52 },
-      warn: 0.2,
-      fire: 2.6,
-      flower: [450, 310],
-      flowerColor: 'red'
-    }
+    message:
+      '우측에서 2차 사슬이 걸리고 좌측에 사선 보라 검기가 먼저 터집니다. 중앙(x=605)에서 기다렸다가 사선 검기가 터진 직후(0.8초) 세로 검은 검선 왼쪽(x=512)으로 이동해 우측 사슬을 끊으세요!'
   },
+
+  // --------------------------------------------------------------------------
+  // 4구간 (16.80s ~ 23.80s): 반시계 6연 회전 검선 + 3차 하단 사슬 절단(12시) + 파멸 점프 + 외곽 보라 폭발 + 중앙 푸른 꽃(36검 회색 무력화!)
+  // --------------------------------------------------------------------------
   {
-    stepTitle: '10. [역사 후반] 12시→1시 이동 후 아래로 내려와 양옆 면·중앙 폭발 뒤 꽃 획득',
-    message: '세로 면 공격(①~③)을 피해 위쪽 끝(12시→1시)으로 이동했다가, 아래로 내려와 중앙 폭발이 끝난 직후 [붉은 꽃]을 획득하세요.',
-    duration: 6.8,
-    worldState: true,
-    startPos: [450, 310],
-    envelope: { type: 'donut', from: [480, 240], to: [545, 420], r: 170, startT: 1.8, endT: 4.5 },
-    attacks: [
-      { type: 'pillar', x1: 80, x2: 240, y1: 195, y2: 495, warn: 0.1, fire: 1.5, seq: 1, label: '① 좌측 면 공격' },
-      { type: 'pillar', x1: 240, x2: 390, y1: 195, y2: 495, warn: 0.4, fire: 1.8, seq: 2, label: '② 좌중간 면 공격' },
-      { type: 'pillar', x1: 610, x2: 760, y1: 195, y2: 495, warn: 0.7, fire: 2.1, seq: 3, label: '③ 우측 면 공격' },
-      { type: 'safeSpot', point: [520, 225], r: 82, warn: 0.2, fire: 2.1, label: '12시 → 1시 조금씩 이동!' },
-      { type: 'pillar', x1: 120, x2: 360, y1: 195, y2: 495, warn: 2.3, fire: 4.3, seq: 4, label: '④ 좌측 면 공격 (아래로!)' },
-      { type: 'pillar', x1: 640, x2: 860, y1: 195, y2: 495, warn: 2.5, fire: 4.3, seq: 5, label: '⑤ 우측 면 공격' },
-      { type: 'floorPad', x: 480, y: 315, r: 120, warn: 2.3, fire: 4.3, label: '중앙 장판 폭발 (끝나면 꽃 획득!)' },
-      { type: 'safeSpot', point: [545, 445], r: 84, warn: 2.3, fire: 4.3, label: '아래로 내려와 대기!' }
-    ],
-    standaloneFlower: { point: [480, 340], appearAt: 4.3, color: 'red' }
-  },
-  {
-    stepTitle: '11. [역사 마무리] 마지막 연속 면 공격(①~④) 회피 후 5시 카운터(X)',
-    message: '마지막 세로 면 공격(①~④)과 바닥 장판을 피해 5시 안전지대로 이동한 뒤, 금색 안광 타이밍에 X키로 카운터를 넣으세요!',
-    duration: 5.8,
+    id: 4,
+    stepTitle: '4구간 · 반시계 6연 회전 검선 & 12시 [파멸] 점프 + 하단 사슬 절단 → 중앙 [생명의 꽃]으로 조여오는 36검 회색 무력화',
+    duration: 7.00,
+    videoRange: '00:16.8 ~ 00:23.8',
     worldState: false,
-    startPos: [480, 340],
-    attacks: [
-      { type: 'pillar', x1: 70, x2: 220, y1: 195, y2: 495, warn: 0.1, fire: 1.6, seq: 1, label: '① 세로 면 공격' },
-      { type: 'pillar', x1: 220, x2: 370, y1: 195, y2: 495, warn: 0.4, fire: 1.9, seq: 2, label: '② 세로 면 공격' },
-      { type: 'pillar', x1: 370, x2: 520, y1: 195, y2: 495, warn: 0.7, fire: 2.2, seq: 3, label: '③ 세로 면 공격' },
-      { type: 'pillar', x1: 520, x2: 650, y1: 195, y2: 495, warn: 1.0, fire: 2.4, seq: 4, label: '④ 세로 면 공격' },
-      { type: 'floorPad', x: 440, y: 350, r: 135, warn: 0.3, fire: 2.2, label: '중앙 바닥 장판' },
-      { type: 'safeSpot', point: [755, 375], r: 85, warn: 0.3, fire: 2.4, label: '5시 카운터 위치' }
+    bossMotion: 'spreadClaws',
+    bossTimeline: [
+      { t: 0.0, motion: 'spreadClaws', burst: true },
+      { t: 1.1, motion: 'spreadClaws', burst: true },
+      { t: 2.5, motion: 'spreadClaws', burst: true },
+      { t: 3.45, motion: 'spreadClaws', burst: true },
+      { t: 5.15, motion: 'spreadClaws', burst: true }
     ],
-    counter: { point: [755, 375], appearAt: 2.4, readyAt: 3.0, fire: 5.8 }
+    bossPos: [579, 228],
+    startPos: [512, 465],
+    guideWaypoints: [
+      [635, 515],
+      [675, 455],
+      [645, 375],
+      [579, 345],
+      [579, 465]
+    ],
+    safeSpot: [579, 345],
+    actionCue: '반시계 회전 → 12시 [파멸] 점프(C) & 사슬 절단 → 중앙 진입 후 [생명의 꽃]을 먹어 조여오는 36검을 회색(판정 소멸)으로 바꾸세요!',
+    castBar: {
+      title: '파멸',
+      startTime: 0.0,
+      endTime: 3.45,
+      color: '#d92b4b',
+      icon: 'disaster'
+    },
+    largoCastBar: {
+      title: '생명의 꽃',
+      startTime: 4.10,
+      endTime: 6.80,
+      color: '#3b82f6',
+      icon: 'flower_blue'
+    },
+    ambientSwords: true,
+    swordScrollSpeed: -145, // 상단 부유 칼날들이 끊임없이 좌우로 이동
+    // 5.15초 외곽 보라 폭발 직후 36검이 중앙(235px -> 38px)으로 급격히 조여옴!
+    // 플레이어가 중앙 푸른 꽃을 먹어 죽음의 세계(worldDeath=true)로 넘어가면 즉시 회색으로 변하며 피격 판정이 사라짐!
+    envelope: {
+      kind: 'ring36',
+      from: [579, 465],
+      to: [579, 465],
+      moveEndTime: 0.1,
+      radius: 235,
+      constrictStartTime: 4.95,
+      constrictEndTime: 6.90,
+      constrictTargetRadius: 38,
+      belongsToLifeWorld: true
+    },
+    grayCircleZone: {
+      center: [579, 465],
+      radius: 215,
+      startTime: 0.0,
+      endTime: 5.40
+    },
+    chain: {
+      anchor: [579, 710],
+      spawnTime: 2.20,
+      cutTime: 4.00
+    },
+    standaloneFlower: {
+      point: [579, 465],
+      color: 'blue',
+      spawnTime: 4.85,
+      expireTime: 6.75,
+      switchesToDeathWorld: true
+    },
+    attacks: [
+      { kind: 'black_slash', point: [579, 465], angle: Math.PI / 2, width: 66, length: 1600, spawnTime: 0.00, fireTime: 0.95, label: '1차 회전 검은 검선' },
+      { kind: 'black_slash', point: [579, 465], angle: Math.PI / 3, width: 66, length: 1600, spawnTime: 0.20, fireTime: 1.15, label: '2차 회전 검은 검선' },
+      { kind: 'black_slash', point: [579, 465], angle: Math.PI / 6, width: 66, length: 1600, spawnTime: 0.40, fireTime: 1.35, label: '3차 회전 검은 검선' },
+      { kind: 'black_slash', point: [579, 465], angle: 0, width: 66, length: 1600, spawnTime: 0.60, fireTime: 1.55, label: '4차 회전 검은 검선' },
+      { kind: 'black_slash', point: [579, 465], angle: -Math.PI / 6, width: 66, length: 1600, spawnTime: 0.80, fireTime: 1.75, label: '5차 회전 검은 검선' },
+      { kind: 'black_slash', point: [579, 465], angle: -Math.PI / 3, width: 66, length: 1600, spawnTime: 1.00, fireTime: 1.95, label: '6차 회전 검은 검선' },
+
+      {
+        kind: 'black_slash',
+        point: [579, 465],
+        angle: 0.06,
+        width: 72,
+        length: 1800,
+        spawnTime: 2.45,
+        fireTime: 4.00,
+        cutsChain: true,
+        label: '3차 사슬 절단 가로 검선'
+      },
+
+      {
+        kind: 'ground_quake',
+        point: [579, 465],
+        radius: 1600,
+        spawnTime: 1.80,
+        fireTime: 3.45,
+        jumpRequired: true,
+        label: '파멸 땅울림 (점프 C)'
+      },
+
+      {
+        kind: 'outer_purple_explosion',
+        center: [579, 465],
+        safeRadius: 215,
+        spawnTime: 4.10,
+        fireTime: 5.15,
+        label: '외곽 보라 장판 대폭발'
+      }
+    ],
+    message:
+      '3시에서 반시계 회전하며 6연 검선을 피하고, 12시에서 [파멸] 점프(C) & 사슬 절단 후 즉시 중앙 원으로 들어오세요! 외곽 폭발 직후 36검이 중앙으로 조여오므로, 중앙의 [생명의 꽃(푸른 꽃)]을 먹어 칼날들을 회색(판정 소멸)으로 만들고 빠져나가세요!'
+  },
+
+  // --------------------------------------------------------------------------
+  // 5구간 (23.80s ~ 29.10s): 회색으로 변한 중앙 36검 관통해 우측 질주 + 상하단 이동 칼날 & 3연 이동 보라 기둥 회피
+  // --------------------------------------------------------------------------
+  {
+    id: 5,
+    stepTitle: '5구간 · 회색 무력화 36검 관통 우측 질주 → 좌우 이동하는 상단 칼날 & 3연 이동 보라 기둥 회피',
+    duration: 5.30,
+    videoRange: '00:23.8 ~ 00:29.1',
+    worldState: true, // 이미 꽃을 먹어 죽음의 세계 진입 상태 (5구간 단독 연습 시에도 회색 36검 잔상 연출!)
+    bossMotion: 'spreadClaws',
+    bossTimeline: [
+      { t: 0.0, motion: 'spreadClaws', burst: true },
+      { t: 1.8, motion: 'spreadClaws', burst: true },
+      { t: 4.9, motion: 'spreadClaws', burst: true }
+    ],
+    bossPos: [579, 228],
+    startPos: [610, 465],
+    guideWaypoints: [
+      [610, 465],
+      [1195, 475]
+    ],
+    safeSpot: [1195, 475],
+    actionCue: '회색으로 변한 중앙 칼날들을 그냥 통과해 우측 끝(x=1195)까지 달려서 이동하는 보라 기둥을 피하세요!',
+    ambientSwords: true,
+    corridorBorderSwords: true,
+    swordScrollSpeed: 165, // 상단/하단 수직 칼날들이 좌우로 계속 이동!
+    // 회색으로 변해 피격 판정이 완전히 사라진 중앙 수축 36검 잔상 (0.0s ~ 1.6s 동안 회전 후 소멸)
+    envelope: {
+      kind: 'ring36',
+      from: [579, 465],
+      to: [579, 465],
+      moveEndTime: 0.1,
+      radius: 52,
+      constrictStartTime: 0.0,
+      constrictEndTime: 1.50,
+      constrictTargetRadius: 28,
+      fadeOutAfter: 1.50,
+      belongsToLifeWorld: true // 현재 worldState=true(죽음의 세계)이므로 자동으로 회색 비활성 & 피격 판정 없음!
+    },
+    grayCircleZone: {
+      center: [1195, 485],
+      radius: 175,
+      startTime: 1.80,
+      endTime: 5.30
+    },
+    attacks: [
+      // 상단 칼날들의 좌우 이동에 맞춰 함께 옆으로 미끄러지며 압박해 오는 3연 수직 보라 기둥!
+      { kind: 'purple_pillar', fromX: 430, x: 560, width: 190, spawnTime: 1.80, fireTime: 4.85, label: '1열 이동 보라 기둥' },
+      { kind: 'purple_pillar', fromX: 655, x: 785, width: 190, spawnTime: 1.95, fireTime: 4.95, label: '2열 이동 보라 기둥' },
+      { kind: 'purple_pillar', fromX: 880, x: 1010, width: 190, spawnTime: 2.10, fireTime: 5.05, label: '3열 이동 보라 기둥' }
+    ],
+    message:
+      '꽃을 먹어 회색으로 변한 중앙 36검은 더 이상 피격 판정이 없습니다! 회색 칼날을 관통해 우측 끝 안전지대(x=1195)까지 달려서, 상단 칼날과 함께 좌→우로 이동하며 덮쳐오는 3연 보라 기둥을 피하세요!'
+  },
+
+  // --------------------------------------------------------------------------
+  // 6구간 (29.10s ~ 34.40s): 우측 끝(x=1195) -> 좌측 끝(x=-165) 도미노 추격 기둥 대질주 + 4차 좌측 사슬 절단 & 죽음의 꽃
+  // --------------------------------------------------------------------------
+  {
+    id: 6,
+    stepTitle: '6구간 · 우→좌 5연 추격 기둥 맵 횡단 대질주 → 우측 스텝으로 4차 사슬 절단 & [죽음의 꽃]',
+    duration: 5.30,
+    videoRange: '00:29.1 ~ 00:34.4',
+    worldState: true,
+    bossMotion: 'spreadClaws',
+    bossTimeline: [
+      { t: 0.0, motion: 'spreadClaws', burst: true },
+      { t: 0.70, motion: 'spreadClaws', burst: true },
+      { t: 3.45, motion: 'spreadClaws', burst: true },
+      { t: 4.10, motion: 'spreadClaws', burst: true }
+    ],
+    bossPos: [579, 228],
+    startPos: [1195, 475],
+    guideWaypoints: [
+      [1195, 475],
+      [-165, 505],
+      [65, 505],
+      [165, 520]
+    ],
+    safeSpot: [-165, 505],
+    actionCue: '왼쪽으로 쭉 달려(←←) 5연 추격 기둥을 피한 직후, 오른쪽(x=65)으로 넘어와 사슬 절단 & 붉은 꽃 습득!',
+    castBar: {
+      title: '죽음의 꽃',
+      startTime: 0.45,
+      endTime: 5.25,
+      color: '#ef4444',
+      icon: 'flower_red'
+    },
+    ambientSwords: true,
+    corridorBorderSwords: true,
+    swordScrollSpeed: -185, // 상단/하단 칼날들이 우→좌로 끊임없이 이동!
+    grayCircleZone: {
+      center: [115, 500],
+      radius: 215,
+      startTime: 0.40,
+      endTime: 5.30
+    },
+    chain: {
+      anchor: [-255, 520],
+      spawnTime: 1.85,
+      cutTime: 4.10,
+      flower: [165, 520],
+      flowerColor: 'red',
+      switchesToLifeWorld: true
+    },
+    attacks: [
+      // 상단 칼날들의 우→좌 이동과 함께 옆으로 이동하며 플레이어 뒤를 바짝 추격해 터지는 5연 수직 보라 기둥!
+      { kind: 'purple_pillar', fromX: 960, x: 820, width: 180, spawnTime: 0.40, fireTime: 3.15, label: '1열 추격 보라 기둥' },
+      { kind: 'purple_pillar', fromX: 760, x: 620, width: 180, spawnTime: 0.55, fireTime: 3.25, label: '2열 추격 보라 기둥' },
+      { kind: 'purple_pillar', fromX: 560, x: 420, width: 180, spawnTime: 0.70, fireTime: 3.35, label: '3열 추격 보라 기둥' },
+      { kind: 'purple_pillar', fromX: 360, x: 220, width: 180, spawnTime: 0.85, fireTime: 3.45, label: '4열 추격 보라 기둥' },
+      { kind: 'purple_pillar', fromX: 160, x: 20,  width: 180, spawnTime: 1.00, fireTime: 3.55, label: '5열 추격 보라 기둥' },
+
+      {
+        kind: 'black_slash',
+        point: [-75, 500],
+        angle: Math.PI / 2,
+        width: 72,
+        length: 1600,
+        spawnTime: 1.85,
+        fireTime: 4.10,
+        cutsChain: true,
+        label: '4차 좌측 사슬 절단 수직 검선'
+      }
+    ],
+    message:
+      '우측에서 좌측으로 도미노처럼 추격해 오는 5연 보라 기둥을 피해 좌측 끝(x=-165)까지 전력 질주(←←)하세요! 5번째 기둥이 터진 직후(3.55초) 검은 세로 검선 오른쪽(x=65)으로 넘어와 사슬을 끊고 [죽음의 꽃]을 습득하세요!'
+  },
+
+  // --------------------------------------------------------------------------
+  // 7구간 (34.40s ~ 42.00s): 12검 수레바퀴(3시->12시 고속 회전 이동) + 우측 거대 붉은 폭발/도넛 링 + 대각선 5차 사슬 절단 + 생명의 꽃
+  // --------------------------------------------------------------------------
+  {
+    id: 7,
+    stepTitle: '7구간 · 12검 회전 수레바퀴(3시→12시) + 거대 붉은 원 폭발 + 대각선 5차 사슬 절단 & [생명의 꽃]',
+    duration: 7.60,
+    videoRange: '00:34.4 ~ 00:42.0',
+    worldState: false,
+    bossMotion: 'spreadClaws',
+    bossTimeline: [
+      { t: 0.0, motion: 'spreadClaws', burst: true },
+      { t: 0.80, motion: 'spreadClaws', burst: true },
+      { t: 2.50, motion: 'spreadClaws', burst: true },
+      { t: 5.55, motion: 'spreadClaws', burst: true },
+      { t: 6.60, motion: 'spreadClaws', burst: true }
+    ],
+    bossPos: [579, 228],
+    startPos: [220, 485],
+    guideWaypoints: [
+      [395, 455],
+      [355, 455],
+      [605, 475]
+    ],
+    safeSpot: [355, 455],
+    actionCue: '11시 대각선 검은 검선 왼쪽 위(x=355)로 이동해 5차 사슬을 끊고 바로 보스 아래 푸른 꽃 습득!',
+    castBar: {
+      title: '생명의 꽃',
+      startTime: 4.40,
+      endTime: 7.55,
+      color: '#3b82f6',
+      icon: 'flower_blue'
+    },
+    ambientSwords: true,
+    swordScrollSpeed: 135,
+    envelope: {
+      kind: 'ring36',
+      from: [460, 455],
+      to: [460, 455],
+      moveEndTime: 0.1,
+      radius: 370,
+      belongsToLifeWorld: true
+    },
+    swordWheel12: {
+      keyframes: [
+        { t: 0.0, pos: [835, 495] },
+        { t: 1.6, pos: [800, 435] },
+        { t: 3.4, pos: [705, 315] },
+        { t: 5.2, pos: [520, 165] },
+        { t: 7.0, pos: [470, 145] }
+      ],
+      spokeLength: 215,
+      killRadius: 155,
+      belongsToLifeWorld: true
+    },
+    chain: {
+      anchor: [935, 575],
+      spawnTime: 4.55,
+      cutTime: 6.60,
+      flower: [605, 475],
+      flowerColor: 'blue',
+      switchesToDeathWorld: true
+    },
+    attacks: [
+      {
+        kind: 'red_giant_circle',
+        point: [790, 475],
+        radius: 355,
+        donutSafeInner: 355,
+        donutSafeOuter: 455,
+        spawnTime: 2.40,
+        fireTime: 5.55,
+        label: '우측 거대 붉은 원형 암흑 폭발'
+      },
+      {
+        kind: 'black_slash',
+        point: [455, 455],
+        angle: -1.16,
+        width: 74,
+        length: 1700,
+        spawnTime: 4.85,
+        fireTime: 6.60,
+        cutsChain: true,
+        label: '5차 사슬 절단 대각선 검선'
+      }
+    ],
+    message:
+      '우측(3시)에서 12검 수레바퀴가 고속 회전하며 12시로 올라가고 거대 붉은 원이 팽창합니다. 사슬이 생기면 왼쪽 위 대각선(x=355)에 서서 우하단 사슬을 끊은 뒤, 보스 아래 [생명의 꽃(푸른 꽃)]을 밟으세요!'
+  },
+
+  // --------------------------------------------------------------------------
+  // 8구간 (42.00s ~ 50.80s): 사선 낙하 검 & 수직 기둥 2연 회피 + 흑태양 암흑 폭풍 점프(45.6s) + 중앙 죽음의 꽃(47.6s) + 최후의 기둥 회피
+  // --------------------------------------------------------------------------
+  {
+    id: 8,
+    stepTitle: '8구간 · 사선 검 & 수직 기둥 2연 회피 → 흑태양 폭풍 점프(C) → 중앙 [죽음의 꽃] → 우측 기둥 회피',
+    duration: 8.80,
+    videoRange: '00:42.0 ~ 00:50.8',
+    worldState: true,
+    bossMotion: 'spreadClaws',
+    bossTimeline: [
+      { t: 0.0, motion: 'spreadClaws', burst: true },
+      { t: 1.20, motion: 'spreadClaws', burst: true },
+      { t: 3.10, motion: 'spreadClaws', burst: true },
+      { t: 3.65, motion: 'spreadClaws', burst: true },
+      { t: 5.60, motion: 'spreadClaws', burst: true },
+      { t: 7.65, motion: 'spreadClaws', burst: true }
+    ],
+    bossPos: [579, 228],
+    startPos: [605, 475],
+    guideWaypoints: [
+      [590, 470],
+      [490, 465],
+      [535, 465],
+      [575, 475],
+      [735, 465]
+    ],
+    safeSpot: [575, 475],
+    actionCue: '기둥 2연 회피 → 3.65초 흑태양 암흑 폭풍 점프(C) → 중앙 붉은 꽃 습득 → 오른쪽(x=735) 회피!',
+    castBar: {
+      title: '죽음의 꽃',
+      startTime: 3.15,
+      endTime: 6.75,
+      color: '#ef4444',
+      icon: 'flower_red'
+    },
+    ambientSwords: true,
+    swordScrollSpeed: 155,
+    grayCircleZone: {
+      center: [455, 465],
+      radius: 210,
+      startTime: 1.40,
+      endTime: 5.60
+    },
+    standaloneFlower: {
+      point: [575, 475],
+      color: 'red',
+      spawnTime: 4.25,
+      expireTime: 6.20,
+      switchesToLifeWorld: true
+    },
+    attacks: [
+      { kind: 'purple_pillar', fromX: 165, x: 235, width: 175, swordAngle: 0.95, spawnTime: 0.0, fireTime: 1.20, label: '1차 이동 보라 기둥' },
+      { kind: 'purple_pillar', fromX: 350, x: 420, width: 175, swordAngle: 0.95, spawnTime: 0.0, fireTime: 1.20, label: '1차 이동 보라 기둥' },
+      { kind: 'purple_pillar', fromX: 690, x: 760, width: 175, swordAngle: 0.95, spawnTime: 0.0, fireTime: 1.20, label: '1차 이동 보라 기둥' },
+      { kind: 'purple_pillar', fromX: 875, x: 945, width: 175, swordAngle: 0.95, spawnTime: 0.0, fireTime: 1.20, label: '1차 이동 보라 기둥' },
+
+      { kind: 'purple_pillar', fromX: 230, x: 150, width: 175, swordAngle: 2.15, spawnTime: 1.55, fireTime: 3.10, label: '2차 이동 보라 기둥' },
+      { kind: 'purple_pillar', fromX: 415, x: 335, width: 175, swordAngle: 2.15, spawnTime: 1.55, fireTime: 3.10, label: '2차 이동 보라 기둥' },
+      { kind: 'purple_pillar', fromX: 725, x: 645, width: 175, swordAngle: 2.15, spawnTime: 1.55, fireTime: 3.10, label: '2차 이동 보라 기둥' },
+      { kind: 'purple_pillar', fromX: 910, x: 830, width: 175, swordAngle: 2.15, spawnTime: 1.55, fireTime: 3.10, label: '2차 이동 보라 기둥' },
+
+      {
+        kind: 'ground_quake',
+        point: [579, 465],
+        radius: 1600,
+        spawnTime: 3.15,
+        fireTime: 3.65,
+        jumpRequired: true,
+        darkHurricane: true,
+        label: '흑태양 암흑 폭풍 (점프 C)'
+      },
+
+      { kind: 'purple_pillar', fromX: 150, x: 220, width: 175, swordAngle: 0.45, spawnTime: 4.15, fireTime: 5.60, label: '3차 이동 보라 기둥' },
+      { kind: 'purple_pillar', fromX: 335, x: 405, width: 175, swordAngle: 0.45, spawnTime: 4.15, fireTime: 5.60, label: '3차 이동 보라 기둥' },
+      { kind: 'purple_pillar', fromX: 675, x: 745, width: 175, swordAngle: 0.45, spawnTime: 4.15, fireTime: 5.60, label: '3차 이동 보라 기둥' },
+      { kind: 'purple_pillar', fromX: 860, x: 930, width: 175, swordAngle: 0.45, spawnTime: 4.15, fireTime: 5.60, label: '3차 이동 보라 기둥' },
+
+      { kind: 'purple_pillar', fromX: 195, x: 115, width: 175, spawnTime: 6.35, fireTime: 7.65, label: '4차 이동 보라 기둥' },
+      { kind: 'purple_pillar', fromX: 645, x: 565, width: 175, spawnTime: 6.35, fireTime: 7.65, label: '4차 중앙 보라 기둥' },
+      { kind: 'purple_pillar', fromX: 1105, x: 1025, width: 175, spawnTime: 6.35, fireTime: 7.65, label: '4차 이동 보라 기둥' }
+    ],
+    message:
+      '1차 기둥(중앙) → 2차 기둥(좌측 x=490) 회피 직후, 보스가 흑태양 암흑 회오리를 일으킬 때(3.65초) 점프(C)하세요! 착지 후 중앙 통로의 [죽음의 꽃(붉은 꽃)]을 밟아 생명의 세계로 돌아온 뒤, 우측 통로(x=735)로 마지막 기둥을 피하세요!'
+  },
+
+  // --------------------------------------------------------------------------
+  // 9구간 (50.80s ~ 63.50s): 최종 흑백 카운터 [생명의 끝] (54.0s~54.5s) & 해방된 라르고 합동 격돌 [지금이다, 모험가]
+  // --------------------------------------------------------------------------
+  {
+    id: 9,
+    stepTitle: '9구간 · 최종 흑백 카운터 [생명의 끝] (X키) & 해방된 라르고 합동 격돌 [지금이다, 모험가]',
+    duration: 12.70,
+    videoRange: '00:50.8 ~ 01:03.5',
+    worldState: false,
+    bossMotion: 'swordStance',
+    bossTimeline: [
+      { t: 0.0, motion: 'swordStance', burst: false },
+      { t: 1.40, motion: 'spreadClaws', burst: true },
+      { t: 3.65, motion: 'swordStance', burst: true }
+    ],
+    bossPos: [515, 415],
+    startPos: [685, 455],
+    guideWaypoints: [
+      [665, 455]
+    ],
+    safeSpot: [665, 455],
+    actionCue: '3.2초(영상 54.0초) 화면이 흑백(Monochrome)으로 변하고 흰 별이 번쩍일 때 기본 공격(X)!',
+    castBar: {
+      title: '생명의 끝',
+      startTime: 1.30,
+      endTime: 3.55,
+      color: '#d92b4b',
+      icon: 'disaster'
+    },
+    largoCastBar: {
+      title: '지금이다, 모험가',
+      startTime: 3.65,
+      endTime: 10.70,
+      color: '#22c55e',
+      icon: 'largo'
+    },
+    counter: {
+      point: [515, 415],
+      windupStart: 1.40,
+      grayscaleStart: 3.15,
+      windowStart: 3.05,
+      windowEnd: 3.75,
+      range: 270
+    },
+    attacks: [],
+    message:
+      '유리지에가 양팔을 벌려 [생명의 끝]을 시전하며 보라색 폭풍을 빨아들입니다. 3.15초(영상 54.0초)에 화면 전체가 흑백(Monochrome)으로 변하고 유리지에 머리 위에 하얀 별빛이 번쩍일 때 공격(X)하여 카운터를 넣으세요!'
   }
 ];
+
+window.Yurisie.HISTORY_META = HISTORY_META;
+window.Yurisie.HISTORY_STAGES = HISTORY_STAGES;
+})();

@@ -76,9 +76,15 @@ h1 {
   background: #0f2620;
 }
 
+.badge.warn {
+  border-color: #8f3ad4;
+  color: #e3b8ff;
+  background: #27103b;
+}
+
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
+  grid-template-columns: minmax(0, 1fr) 290px;
   gap: 10px;
 }
 
@@ -101,8 +107,8 @@ aside {
 }
 
 .boss-portrait {
-  width: 50px;
-  height: 50px;
+  width: 52px;
+  height: 52px;
   border-radius: 10px;
   border: 1.5px solid #d468a8;
   object-fit: cover;
@@ -122,12 +128,39 @@ aside {
   align-items: center;
   gap: 8px;
   margin-bottom: 5px;
+  flex-wrap: wrap;
 }
 
 .boss-name {
   font-weight: 800;
   font-size: 14px;
   color: #fff2fb;
+}
+
+.status-pills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.erosion-pill {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 800;
+  border: 1px solid #ff4d84;
+  background: rgba(180, 16, 68, 0.35);
+  color: #ffd1e0;
+  animation: pulseWarn 1.4s ease-in-out infinite;
+}
+
+.erosion-pill.hidden {
+  display: none;
+}
+
+@keyframes pulseWarn {
+  0%, 100% { box-shadow: 0 0 6px rgba(255, 77, 132, 0.35); }
+  50% { box-shadow: 0 0 14px rgba(255, 77, 132, 0.85); }
 }
 
 .world-pill {
@@ -138,16 +171,18 @@ aside {
   border: 1px solid #3f6d9c;
   background: #10243a;
   color: var(--cyan);
+  transition: all 0.25s ease;
 }
 
 .world-pill.death {
   border-color: #9e3f76;
   background: #331028;
   color: var(--rose);
+  box-shadow: 0 0 12px rgba(255, 77, 132, 0.45);
 }
 
 .progress-track {
-  height: 9px;
+  height: 8px;
   border-radius: 999px;
   background: #0a0511;
   border: 1px solid #331d49;
@@ -159,6 +194,56 @@ aside {
   width: 0%;
   background: linear-gradient(90deg, #52e8ff, #be6eff, #ff4d84);
   transition: width 0.2s ease-out;
+}
+
+/* Influence Gauge (Largo vs Yurisie) */
+.influence-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 5px;
+}
+
+.inf-label {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+.inf-label.largo {
+  color: #7eeeff;
+}
+
+.inf-label.yurisie {
+  color: #ff82b2;
+}
+
+.influence-track {
+  position: relative;
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #4b1236, #b81d66);
+  border: 1px solid #3d2154;
+  overflow: hidden;
+}
+
+.influence-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #38bdf8, #52e8ff, #f5d89a);
+  transition: width 0.25s ease-out;
+  box-shadow: 0 0 8px rgba(82, 232, 255, 0.7);
+}
+
+.influence-mid {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.7);
+  transform: translateX(-50%);
 }
 
 .hud-stats {
@@ -184,7 +269,7 @@ canvas {
   display: block;
   width: 100%;
   height: auto;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 1158 / 720;
 }
 
 .intro-gif {
@@ -206,7 +291,7 @@ canvas {
 .overlay {
   position: absolute;
   inset: 0;
-  background: rgba(8, 4, 15, 0.84);
+  background: rgba(8, 4, 15, 0.86);
   backdrop-filter: blur(5px);
   display: flex;
   flex-direction: column;
@@ -234,9 +319,35 @@ canvas {
 }
 
 .overlay p {
-  max-width: 560px;
-  margin: 0 0 18px;
+  max-width: 580px;
+  margin: 0 0 14px;
   color: #d9cae8;
+}
+
+.overlay-stats {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.overlay-stats.hidden {
+  display: none;
+}
+
+.stat-chip {
+  background: #1b102c;
+  border: 1px solid #482e68;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: #e6d8f7;
+}
+
+.stat-chip strong {
+  color: var(--gold);
+  margin-left: 4px;
 }
 
 .btn-primary {
@@ -265,6 +376,8 @@ canvas {
 .timeline-meta {
   display: flex;
   justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
   font-size: 11.5px;
   color: var(--muted);
   margin-bottom: 5px;
@@ -272,11 +385,16 @@ canvas {
 
 .timeline-track {
   position: relative;
-  height: 14px;
-  border-radius: 7px;
+  height: 16px;
+  border-radius: 8px;
   background: #1a0f29;
   border: 1px solid #3c2556;
   overflow: hidden;
+  cursor: pointer;
+}
+
+.timeline-track:hover {
+  border-color: #7c52ad;
 }
 
 .timeline-cursor {
@@ -287,6 +405,7 @@ canvas {
   background: #ffffff;
   box-shadow: 0 0 8px #ffffff;
   z-index: 3;
+  pointer-events: none;
 }
 
 .timeline-marker {
@@ -298,6 +417,12 @@ canvas {
   background: var(--rose);
   transform: translateX(-50%);
   z-index: 2;
+  pointer-events: none;
+}
+
+.timeline-marker.void {
+  background: var(--purple);
+  width: 5px;
 }
 
 .timeline-marker.chain {
@@ -310,6 +435,7 @@ canvas {
 
 .timeline-marker.counter {
   background: var(--gold);
+  width: 5px;
 }
 
 .controls-bar {
@@ -327,20 +453,29 @@ canvas {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  align-items: center;
 }
 
-button.ctrl {
+button.ctrl,
+select.ctrl {
   background: #241638;
   color: #efe4fa;
   border: 1px solid #4d326d;
-  padding: 6px 11px;
+  padding: 6px 10px;
   border-radius: 8px;
   font-size: 12px;
   font-weight: 700;
+  font-family: inherit;
   cursor: pointer;
 }
 
-button.ctrl:hover {
+select.ctrl option {
+  background: #1a0f29;
+  color: #efe4fa;
+}
+
+button.ctrl:hover,
+select.ctrl:hover {
   border-color: var(--gold);
 }
 
@@ -348,6 +483,18 @@ button.ctrl.active {
   background: #432263;
   border-color: var(--cyan);
   color: var(--cyan);
+}
+
+.vol-wrap {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 4px;
+}
+
+.vol-wrap input[type="range"] {
+  width: 68px;
+  accent-color: var(--cyan);
+  cursor: pointer;
 }
 
 .cue-box {
@@ -373,7 +520,7 @@ button.ctrl.active {
 aside {
   display: flex;
   flex-direction: column;
-  max-height: 760px;
+  max-height: 790px;
 }
 
 .aside-head {
@@ -430,9 +577,21 @@ aside {
 }
 
 .step-item .step-num {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   font-size: 11px;
   font-weight: 800;
   color: var(--gold);
+}
+
+.step-badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(105, 240, 174, 0.14);
+  border: 1px solid #2c8a66;
+  color: var(--green);
 }
 
 .step-item .step-title {
